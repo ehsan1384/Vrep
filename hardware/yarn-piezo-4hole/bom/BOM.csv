@@ -1,0 +1,24 @@
+Ref,Qty,Value,Footprint,Manufacturer,MPN,Description,Supplier,Est_Price_USD
+F1,1,PTC 200mA,1206,Bourns,MF-MSMF200/24X-2,Circuit protection PTC,Mouser,0.15
+D1,1,SMBJ26A,SMB,Littelfuse,SMBJ26A,TVS 26V,Mouser,0.25
+U1,1,MP1584EN,SOT23-6,MPS,MP1584EN-LF-Z,Buck 24V to 5V,Mouser,0.80
+L1,1,10uH,6x6mm,Wurth,744043100,Inductor buck,Mouser,0.30
+U2,1,AMS1117-3.3,SOT223,AMS,AMS1117-3.3,LDO 3.3V,Mouser,0.20
+C1,1,100uF 50V,8mm radial,Panasonic,EEU-FC1H101,Electrolytic input,Mouser,0.40
+C2,2,22uF 16V,0805,Murata,GRM21BR61C226ME44,Output cap buck,Mouser,0.10
+U4,4,TL072,SOIC-8,TI,TL072CDR,Dual JFET opamp,Mouser,0.50
+U7,2,LM393,SOIC-8,TI,LM393DR,Dual comparator,Mouser,0.30
+Q1,4,2N3904,SOT23,ON Semi,MMBT3904,Driver LED/opto,Mouser,0.05
+OP1,4,PC817,4pin DIP,Sharp,PC817X,Optocoupler,Mouser,0.15
+VR1,4,10k trimpot,3296W,Bourns,3296W-1-103,Multi-turn sensitivity,Mouser,0.80
+LED1,4,Red 3mm,3mm LED,Kingbright,L-934GD,Status LED,Mouser,0.05
+J2,1,DB15 male,DB15,Amphenol,DBM15W,Main connector,Mouser,2.50
+J1,1,2pin 5.08mm,terminal,Phoenix,1757018,Power terminal,Mouser,0.40
+PZ1,4,Piezo disc 20mm,20mm disc,Murata,7BB-20-6L0,Piezoelectric disc,Mouser,1.20
+EYE1,4,Ceramic eyelet 1.0mm,custom,Custom,AL2O3-1.0,Ceramic yarn guide,Local CNC,3.00
+BODY1,1,Aluminum body,custom,Custom,YP4H-BODY-AL,CNC housing,Local CNC,8.00
+SPR1,4,Compression spring 0.3mm,custom,Custom,SPR-3x8,Coupling spring,Local,0.20
+PIN1,4,Coupling pin 1.5mm,custom,Custom,PIN-SS303-6,Transfer pin,Local,0.30
+PCB1,1,YP4H-MAIN Rev A,70x25mm,JLCPCB,YP4H-MAIN,2-layer PCB,JLCPCB,2.00
+CW1,1,Silver conductive epoxy, syringe,MG Chemicals,8331-14G,Piezo bonding,Mouser,25.00
+FERR1,1,Ferrite bead,cable mount,Fair-Rite,0431177081,EMI suppression,Mouser,0.50
