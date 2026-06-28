@@ -5,7 +5,7 @@ set (VREP_PATH
     "${CMAKE_CURRENT_SOURCE_DIR}/../Vrep_32/programming/"
     CACHE "The VRep build path" STRING)
 
-set (SOURCES VREPClient.cpp Motor.cpp Object.cpp ForceSensor.cpp)
+set (SOURCES VREPClient.cpp Motor.cpp Object.cpp ForceSensor.cpp YarnIrregularityDetector.cpp YarnIrregularitySensor.cpp)
 
 set (EXTRA_LIBRARIES pthread :remoteApi.so)
 

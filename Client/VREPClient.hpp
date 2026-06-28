@@ -8,6 +8,7 @@
 #include "Object.hpp"
 #include "Motor.hpp"
 #include "ForceSensor.hpp"
+#include "YarnIrregularitySensor.hpp"
 
 /**
  * Handle V-REP Server communication with the
@@ -49,6 +50,11 @@ class VREPClient
         size_t countForceSensors() const;
 
         /**
+         * Return the number of yarn irregularity sensors
+         */
+        size_t countYarnSensors() const;
+
+        /**
          * Return a motor by its index
          */
         const Motor& getMotor(size_t index) const;
@@ -64,6 +70,13 @@ class VREPClient
          */
         const ForceSensor& getForceSensor(size_t index) const;
         ForceSensor& getForceSensor(size_t index);
+
+        /**
+         * Return a yarn sensor by its index
+         */
+        const YarnIrregularitySensor& getYarnSensor(size_t index) const;
+        YarnIrregularitySensor& getYarnSensor(size_t index);
+        YarnIrregularitySensor& getYarnSensor(const std::string& name);
 
         /**
          * Return accelerometer value
@@ -103,6 +116,11 @@ class VREPClient
          * Retrieve all force sensors handle
          */
         void scanForceSensors();
+
+        /**
+         * Retrieve all yarn irregularity sensors handle
+         */
+        void scanYarnSensors();
         
         /**
          * Retrieve the identifier name of the given
@@ -163,6 +181,12 @@ class VREPClient
             double& torqueX, double& torqueY, double& torqueZ) const;
 
         /**
+         * Read yarn sensor float signals published by V-REP Lua script
+         */
+        void readYarnSensorSignals(const std::string& sensorName,
+            double& diameterMm, double& faultCode, double& cvPercent) const;
+
+        /**
          * Read fom V-REP server accelerometer sensor
          */
         void readAccelerometer();
@@ -194,6 +218,16 @@ class VREPClient
         std::vector<ForceSensor> _forceSensors;
 
         /**
+         * Yarn irregularity sensor container
+         */
+        std::vector<YarnIrregularitySensor> _yarnSensors;
+
+        /**
+         * Yarn sensors, mapped by name
+         */
+        std::map<std::string, YarnIrregularitySensor*> _yarnSensorsByName;
+
+        /**
          * Accelerometer value
          */
         double _accelerometerXRead;
@@ -214,6 +248,7 @@ class VREPClient
         friend class Object;
         friend class Motor;
         friend class ForceSensor;
+        friend class YarnIrregularitySensor;
 };
 
 #endif
