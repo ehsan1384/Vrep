@@ -10,6 +10,8 @@ VREPClient::VREPClient() :
     _motors(),
     _motorsByName(),
     _forceSensors(),
+    _yarnSensors(),
+    _yarnSensorsByName(),
     _accelerometerXRead(0),
     _accelerometerYRead(0),
     _accelerometerZRead(0),
@@ -33,6 +35,8 @@ void VREPClient::connect(const char* ip, int port)
     scanMotors();
     //Retrieve force sensors
     scanForceSensors();
+    //Retrieve yarn sensors
+    scanYarnSensors();
 }
 
 void VREPClient::disconnect() const
@@ -48,6 +52,11 @@ size_t VREPClient::countMotors() const
 size_t VREPClient::countForceSensors() const
 {
     return _forceSensors.size();
+}
+
+size_t VREPClient::countYarnSensors() const
+{
+    return _yarnSensors.size();
 }
 
 const Motor& VREPClient::getMotor(size_t index) const
@@ -91,6 +100,32 @@ ForceSensor& VREPClient::getForceSensor(size_t index)
     } else {
         return _forceSensors[index];
     }
+}
+
+const YarnIrregularitySensor& VREPClient::getYarnSensor(size_t index) const
+{
+    if (index >= _yarnSensors.size()) {
+        throw std::string("Invalid yarn sensor index");
+    } else {
+        return _yarnSensors[index];
+    }
+}
+
+YarnIrregularitySensor& VREPClient::getYarnSensor(size_t index)
+{
+    if (index >= _yarnSensors.size()) {
+        throw std::string("Invalid yarn sensor index");
+    } else {
+        return _yarnSensors[index];
+    }
+}
+
+YarnIrregularitySensor& VREPClient::getYarnSensor(const std::string& name)
+{
+    if (_yarnSensorsByName.find(name) != _yarnSensorsByName.end()) {
+        return *(_yarnSensorsByName[name]);
+    }
+    throw std::string("Invalid yarn sensor name");
 }
 
 double VREPClient::readAccelerometerX() const
@@ -181,6 +216,14 @@ void VREPClient::start()
         if (error != simx_error_noerror && error != simx_error_novalue_flag) {
             throw std::string("Unable to set up tracker Z streaming");
         }
+        //Start yarn sensor data streaming (optional signals from scene script)
+        for (size_t i=0;i<_yarnSensors.size();i++) {
+            const std::string& name = _yarnSensors[i].getName();
+            simxFloat value;
+            simxGetFloatSignal((name + "_diameter").c_str(), &value, simx_opmode_streaming);
+            simxGetFloatSignal((name + "_fault").c_str(), &value, simx_opmode_streaming);
+            simxGetFloatSignal((name + "_cv").c_str(), &value, simx_opmode_streaming);
+        }
     } 
     //Simulation step to initialize communication (streaming/buffer)
     error = simxSynchronousTrigger();
@@ -231,6 +274,10 @@ void VREPClient::nextStep()
     //Update force sensors data
     for (size_t i=0;i<_forceSensors.size();i++) {
         _forceSensors[i].update(*this);
+    }
+    //Update yarn sensors data
+    for (size_t i=0;i<_yarnSensors.size();i++) {
+        _yarnSensors[i].update(*this);
     }
     //Update accelerometer sensor
     readAccelerometer();
@@ -296,6 +343,33 @@ void VREPClient::scanForceSensors()
     //Load force sensor data
     for (int i=0;i<sensorCount;i++) {
         _forceSensors[i].load(*this);
+    }
+}
+
+void VREPClient::scanYarnSensors()
+{
+    simxInt sensorCount = 0;
+    simxInt* sensorArray = NULL;
+    if (
+        simxGetObjects(sim_object_proximitysensor_type, &sensorCount, &sensorArray,
+        simx_opmode_oneshot_wait) != simx_error_noerror
+    ) {
+        throw std::string("Unable to retrieve proximity sensor handles");
+    }
+
+    _yarnSensors.clear();
+    _yarnSensorsByName.clear();
+    for (int i=0;i<sensorCount;i++) {
+        std::string name = getNameFromHandle(sensorArray[i]);
+        if (name.find("yarnSensor") == 0) {
+            _yarnSensors.push_back(sensorArray[i]);
+        }
+    }
+
+    for (size_t i=0;i<_yarnSensors.size();i++) {
+        YarnIrregularitySensor *sensor = &_yarnSensors[i];
+        sensor->load(*this);
+        _yarnSensorsByName[sensor->getName()] = sensor;
     }
 }
 
@@ -427,6 +501,22 @@ void VREPClient::readForceSensor(simxInt handle,
         torqueY = torque[1];
         torqueZ = torque[2];
     }
+}
+
+void VREPClient::readYarnSensorSignals(const std::string& sensorName,
+    double& diameterMm, double& faultCode, double& cvPercent) const
+{
+    simxFloat value = 0.0f;
+    simxInt error;
+
+    error = simxGetFloatSignal((sensorName + "_diameter").c_str(), &value, simx_opmode_buffer);
+    diameterMm = (error == simx_error_noerror) ? value : 0.0;
+
+    error = simxGetFloatSignal((sensorName + "_fault").c_str(), &value, simx_opmode_buffer);
+    faultCode = (error == simx_error_noerror) ? value : 0.0;
+
+    error = simxGetFloatSignal((sensorName + "_cv").c_str(), &value, simx_opmode_buffer);
+    cvPercent = (error == simx_error_noerror) ? value : 0.0;
 }
 
 void VREPClient::readAccelerometer()
