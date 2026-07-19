@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>اتصال LCD 3.2 اینچ ST7789 به STM32F103RCT6</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Noto Naskh Arabic", "DejaVu Sans", sans-serif;
+      font-size: 11pt;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      font-size: 20pt;
+      color: #0d47a1;
+      border-bottom: 3px solid #0d47a1;
+      padding-bottom: 8px;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 14pt;
+      color: #1565c0;
+      margin-top: 22px;
+      border-right: 4px solid #1565c0;
+      padding-right: 10px;
+    }
+
+    h3 {
+      font-size: 12pt;
+      color: #333;
+      margin-top: 16px;
+    }
+
+    p, li {
+      text-align: justify;
+    }
+
+    code, .mono {
+      font-family: "DejaVu Sans Mono", monospace;
+      background: #f4f4f4;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 10pt;
+      direction: ltr;
+      unicode-bidi: embed;
+    }
+
+    pre {
+      direction: ltr;
+      text-align: left;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-family: "DejaVu Sans Mono", monospace;
+      font-size: 9pt;
+      line-height: 1.45;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      page-break-inside: avoid;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 10pt;
+      page-break-inside: avoid;
+    }
+
+    th, td {
+      border: 1px solid #bbb;
+      padding: 7px 9px;
+      text-align: right;
+      vertical-align: top;
+    }
+
+    th {
+      background: #e3f2fd;
+      color: #0d47a1;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    .note {
+      background: #fff8e1;
+      border: 1px solid #ffcc02;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 14px 0;
+    }
+
+    .diagram {
+      direction: ltr;
+      text-align: left;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-family: "DejaVu Sans Mono", monospace;
+      font-size: 9pt;
+      line-height: 1.35;
+      white-space: pre;
+      page-break-inside: avoid;
+    }
+
+    ul {
+      padding-right: 22px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 9pt;
+      color: #666;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>اتصال LCD 3.2 اینچ ST7789 (37 پین) به STM32F103RCT6</h1>
+
+<div class="warning">
+  <strong>نکته مهم:</strong>
+  ماژول‌های 3.2 اینچ با کانکتور <strong>37 پین</strong> معمولاً رابط
+  <code>Parallel 16-bit MCU (8080)</code> دارند، نه <code>SPI</code>.
+  میکروکنترلر <code>STM32F103RCT6</code> (پکیج 64 پین) فاقد <code>FSMC</code> است؛
+  بنابراین باید با <code>GPIO</code> بیت‌بنگ کار کنید.
+</div>
+
+<h2>۱. مقایسه رابط Parallel و SPI</h2>
+
+<table>
+  <tr>
+    <th>ویژگی</th>
+    <th>ماژول 37 پین</th>
+    <th>ماژول SPI (7–8 پین)</th>
+  </tr>
+  <tr>
+    <td>رابط</td>
+    <td><code>16bit Parallel</code></td>
+    <td><code>SPI</code></td>
+  </tr>
+  <tr>
+    <td>سیگنال‌های داده</td>
+    <td><code>DB0</code> تا <code>DB15</code> + کنترل</td>
+    <td><code>SCK</code>, <code>MOSI</code>, <code>DC</code>, <code>RST</code></td>
+  </tr>
+  <tr>
+    <td>پیچیدگی</td>
+    <td>بالا (حدود 21 پین GPIO)</td>
+    <td>پایین (حدود 5–6 پین)</td>
+  </tr>
+</table>
+
+<h2>۲. پین‌اوت کانکتور 37 پین LCD</h2>
+
+<table>
+  <tr><th>پین</th><th>سیگنال</th><th>توضیح</th></tr>
+  <tr><td>1–4</td><td><code>DB8</code>–<code>DB11</code></td><td>باس داده</td></tr>
+  <tr><td>5</td><td><code>GND</code></td><td>زمین</td></tr>
+  <tr><td>6</td><td><code>VDDI</code></td><td>تغذیه رابط (3.3V)</td></tr>
+  <tr><td>7</td><td><code>/CS</code></td><td>Chip Select (فعال پایین)</td></tr>
+  <tr><td>8</td><td><code>RS</code></td><td>0 = دستور، 1 = داده (DC)</td></tr>
+  <tr><td>9</td><td><code>/WR</code></td><td>سیگنال نوشتن</td></tr>
+  <tr><td>10</td><td><code>/RD</code></td><td>سیگنال خواندن</td></tr>
+  <tr><td>11–14</td><td><code>NC</code></td><td>وصل نشود</td></tr>
+  <tr><td>15</td><td><code>LEDA</code></td><td>آند بک‌لایت</td></tr>
+  <tr><td>16–20</td><td><code>LEDK1</code>–<code>LEDK5</code></td><td>کاتد بک‌لایت</td></tr>
+  <tr><td>21</td><td><code>NC</code></td><td>وصل نشود</td></tr>
+  <tr><td>22</td><td><code>DB12</code></td><td>باس داده</td></tr>
+  <tr><td>23–30</td><td><code>DB0</code>–<code>DB7</code></td><td>باس داده</td></tr>
+  <tr><td>31</td><td><code>/RESET</code></td><td>ریست</td></tr>
+  <tr><td>32</td><td><code>VDD</code></td><td>تغذیه سیستم (3.3V)</td></tr>
+  <tr><td>33</td><td><code>VDDI</code></td><td>تغذیه رابط (3.3V)</td></tr>
+  <tr><td>34</td><td><code>GND</code></td><td>زمین</td></tr>
+  <tr><td>35–37</td><td><code>DB13</code>–<code>DB15</code></td><td>باس داده</td></tr>
+</table>
+
+<h2>۳. نحوه اتصال به STM32F103RCT6</h2>
+
+<h3>۳.۱ تغذیه و بک‌لایت</h3>
+
+<pre>LCD Pin 5, 34 (GND)   ──► GND برد STM32
+LCD Pin 6, 32, 33     ──► 3.3V برد STM32
+LCD Pin 15 (LEDA)     ──► 3.3V (ترجیحاً از طریق مقاومت 100Ω یا ترانزیستور)
+LCD Pin 16-20 (LEDK)  ──► GND</pre>
+
+<div class="note">
+  بک‌لایت این ماژول از 5 عدد LED تشکیل شده و جریان کشی بالایی دارد.
+  بهتر است از پین GPIO با ترانزیستور NPN یا MOSFET برای کنترل روشن/خاموش استفاده کنید.
+</div>
+
+<h3>۳.۲ سیگنال‌های کنترل (پیشنهادی)</h3>
+
+<table>
+  <tr><th>سیگنال LCD</th><th>پین STM32</th><th>توضیح</th></tr>
+  <tr><td><code>/CS</code></td><td><code>PB12</code></td><td>خروجی GPIO</td></tr>
+  <tr><td><code>RS</code> (DC)</td><td><code>PB11</code></td><td>خروجی GPIO</td></tr>
+  <tr><td><code>/WR</code></td><td><code>PB10</code></td><td>خروجی GPIO</td></tr>
+  <tr><td><code>/RD</code></td><td><code>3.3V</code> (ثابت)</td><td>اگر فقط می‌نویسید، به 3.3V وصل کنید</td></tr>
+  <tr><td><code>/RESET</code></td><td><code>PB1</code></td><td>خروجی GPIO</td></tr>
+</table>
+
+<h3>۳.۳ باس داده 16 بیتی (پیشنهادی)</h3>
+
+<table>
+  <tr><th>سیگنال</th><th>پین STM32</th></tr>
+  <tr><td><code>DB0</code></td><td><code>PA0</code></td></tr>
+  <tr><td><code>DB1</code></td><td><code>PA1</code></td></tr>
+  <tr><td><code>DB2</code></td><td><code>PA2</code></td></tr>
+  <tr><td><code>DB3</code></td><td><code>PA3</code></td></tr>
+  <tr><td><code>DB4</code></td><td><code>PA4</code></td></tr>
+  <tr><td><code>DB5</code></td><td><code>PA5</code></td></tr>
+  <tr><td><code>DB6</code></td><td><code>PA6</code></td></tr>
+  <tr><td><code>DB7</code></td><td><code>PA7</code></td></tr>
+  <tr><td><code>DB8</code></td><td><code>PB0</code></td></tr>
+  <tr><td><code>DB9</code></td><td><code>PB2</code></td></tr>
+  <tr><td><code>DB10</code></td><td><code>PB3</code></td></tr>
+  <tr><td><code>DB11</code></td><td><code>PB4</code></td></tr>
+  <tr><td><code>DB12</code></td><td><code>PB5</code></td></tr>
+  <tr><td><code>DB13</code></td><td><code>PB6</code></td></tr>
+  <tr><td><code>DB14</code></td><td><code>PB7</code></td></tr>
+  <tr><td><code>DB15</code></td><td><code>PB8</code></td></tr>
+</table>
+
+<p>پین‌های بالا قابل تغییرند؛ سعی کنید <code>DB0</code> تا <code>DB7</code> روی یک Port (مثلاً PA) و <code>DB8</code> تا <code>DB15</code> روی Port دیگر باشند تا نوشتن سریع‌تر شود.</p>
+
+<h3>۳.۴ دیاگرام اتصال</h3>
+
+<div class="diagram">                    STM32F103RCT6
+                   ┌──────────────┐
+    LCD /CS  ─────►│ PB12         │
+    LCD RS   ─────►│ PB11         │
+    LCD /WR  ─────►│ PB10         │
+    LCD /RD  ─────►│ 3.3V (ثابت)  │
+    LCD RESET─────►│ PB1          │
+                   │              │
+    LCD DB0-7  ───►│ PA0-PA7      │
+    LCD DB8-15 ───►│ PB0,PB2-PB8  │
+                   │              │
+    LCD VDD/VDDI──►│ 3.3V         │
+    LCD GND    ───►│ GND          │
+    LCD LEDA   ───►│ 3.3V (+ R)   │
+    LCD LEDK   ───►│ GND          │
+                   └──────────────┘</div>
+
+<h2>۴. تنظیمات STM32CubeIDE</h2>
+
+<h3>۴.۱ ساخت پروژه</h3>
+<ul>
+  <li><code>File</code> → <code>New</code> → <code>STM32 Project</code></li>
+  <li>میکرو: <code>STM32F103RCT6</code></li>
+  <li>در Pinout همه پین‌های جدول بالا را <code>GPIO_Output</code> کنید</li>
+  <li>Speed: <code>High</code></li>
+  <li>Clock: <code>72 MHz</code></li>
+</ul>
+
+<h3>۴.۲ هدر درایور (lcd_driver.h)</h3>
+
+<pre>#define LCD_CS_LOW()    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET)
+#define LCD_CS_HIGH()   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET)
+#define LCD_RS_CMD()    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET)
+#define LCD_RS_DATA()   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET)
+#define LCD_WR_LOW()    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET)
+#define LCD_WR_HIGH()   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET)
+
+void LCD_WriteData16(uint16_t data);
+void LCD_WriteCmd(uint8_t cmd);
+void ST7789_Init(void);</pre>
+
+<h3>۴.۳ نوشتن داده روی باس Parallel</h3>
+
+<pre>void LCD_WriteData16(uint16_t data) {
+    // DB0-DB7 روی Port A
+    GPIOA->ODR = (GPIOA->ODR & 0xFF00) | (data & 0x00FF);
+    // DB8-DB15 روی Port B (با در نظر گرفتن پین‌های استفاده‌شده)
+    // ... تنظیم بیت‌های مربوطه
+
+    LCD_CS_LOW();
+    LCD_RS_DATA();
+    LCD_WR_LOW();
+    LCD_WR_HIGH();  // لبه بالارونده = نوشتن
+    LCD_CS_HIGH();
+}
+
+void LCD_WriteCmd(uint8_t cmd) {
+    LCD_CS_LOW();
+    LCD_RS_CMD();
+    // ... ارسال cmd
+    LCD_CS_HIGH();
+}</pre>
+
+<h3>۴.۴ توالی راه‌اندازی ST7789</h3>
+
+<pre>void ST7789_Init(void) {
+    // Reset
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+    HAL_Delay(10);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+    HAL_Delay(120);
+
+    LCD_WriteCmd(0x11);   // Sleep Out
+    HAL_Delay(120);
+    LCD_WriteCmd(0x36);   // Memory Access Control
+    LCD_WriteData16(0x00);
+    LCD_WriteCmd(0x3A);   // Pixel Format
+    LCD_WriteData16(0x05); // 16-bit RGB565
+    LCD_WriteCmd(0x21);   // Inversion ON (بسته به پنل)
+    LCD_WriteCmd(0x29);   // Display ON
+}</pre>
+
+<h2>۵. نکات مهم</h2>
+<ul>
+  <li><strong>ولتاژ 3.3V:</strong> هر دو برد باید 3.3V باشند؛ 5V به LCD نزنید.</li>
+  <li><strong>/RD ثابت:</strong> برای فقط نوشتن، <code>/RD</code> را به 3.3V وصل کنید.</li>
+  <li><strong>کندی بیت‌بنگ:</strong> بدون FSMC، رفرش کامل صفحه کند است.</li>
+  <li><strong>تاچ:</strong> اگر تاچ رزیتسیو (RTP) دارید، معمولاً کانکتور جداگانه دارد.</li>
+  <li><strong>جایگزین بهتر:</strong> ماژول SPI (7–8 پین) برای F103 راحت‌تر است.</li>
+</ul>
+
+<h2>۶. عیب‌یابی (صفحه سیاه)</h2>
+<ul>
+  <li>سیگنال‌های RESET، CS، RS و WR را با مولتی‌متر بررسی کنید.</li>
+  <li>ترتیب پین‌های DB0 تا DB15 را با دیتاشیت ماژول تطبیق دهید.</li>
+  <li>در رجیستر <code>0x36</code> (MADCTL) جهت را امتحان کنید: <code>0x00</code>, <code>0x60</code>, <code>0xC0</code>, <code>0xA0</code>.</li>
+  <li>دستورات <code>0x21</code> / <code>0x20</code> (Display Inversion) را تست کنید.</li>
+</ul>
+
+<div class="footer">
+  راهنمای اتصال LCD 3.2 اینچ ST7789 به STM32F103RCT6 — تولید شده در STM32CubeIDE
+</div>
+
+</body>
+</html>
