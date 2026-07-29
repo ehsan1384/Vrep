@@ -22,14 +22,16 @@
 
 ```bash
 cd gold_market
-pip install -r requirements.txt
-streamlit run app.py
+python3 -m pip install -r requirements.txt
+python3 -m streamlit run app.py
 ```
+
+اگر `streamlit: command not found` دیدید، حتماً با `python3 -m streamlit` اجرا کنید (نه خود دستور `streamlit`).
 
 نسخه خط فرمان (خروجی HTML/CSV):
 
 ```bash
-python chart_cli.py
+python3 chart_cli.py
 ```
 
 فایل‌ها در پوشه `output/` ذخیره می‌شوند.
