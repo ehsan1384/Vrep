@@ -1,33 +1,14 @@
 # آیکن‌های پنل صنعتی (CorelDRAW)
 
-سه نماد استاندارد برای چاپ روی پنل / ممبران / حکاکی لیزر:
-
 | فایل | کاربرد |
 |------|--------|
-| `icon-settings-filled.svg` | تنظیمات (`Settings`) |
-| `icon-wifi-filled.svg` | وای‌فای (`Wi-Fi`) |
-| `icon-display-filled.svg` | نمایش / مانیتور (`Display`) |
-| `panel-icons-sheet.svg` | هر سه در یک شیت |
-| نسخه‌های `icon-*-` خطی | اگر خط دور بخواهید |
+| `icon-settings-filled.svg` | تنظیمات |
+| `icon-wifi-filled.svg` | وای‌فای |
+| `icon-display-filled.svg` | نمایش (چشم / View) |
+| `icon-reset-filled.svg` | شروع مجدد / Reset |
+| `icon-zero-reset-filled.svg` | صفر کردن + ریست |
+| `icon-zero-filled.svg` | فقط صفر (0) |
+| `panel-icons-sheet.svg` | همه در یک شیت |
 
 ## ورود به CorelDRAW
-
-1. `File` → `Import` (`Ctrl+I`)
-2. فایل `SVG` را انتخاب کنید
-3. گزینه import را روی `Curves` / برداری بگذارید
-4. بعد از ورود: `Arrange` → `Ungroup All` تا جدا شوند
-5. اندازه پیشنهادی روی پنل: ارتفاع آیکن **۸ تا ۱۶ میلی‌متر**
-6. رنگ: مشکی ۱۰۰٪ (`K=100`) برای سیلک / لیزر؛ یا یک‌رنگ مطابق رنگ چاپ پنل
-
-## آماده‌سازی چاپ صنعتی
-
-- همه را `Convert to Curves` کنید
-- ضخامت خط کمتر از حدود **۰.۳ mm** نگذارید (برای سیلک)
-- برای لیزر/حکاکی: نسخه `filled` بهتر است
-- قبل از خروجی، `Object` → `Shaping` → `Weld` برای یک‌تکه کردن هر آیکن
-
-## رسم سریع خودتان در Corel (اگر بخواهید از صفر)
-
-**Settings:** دایره + مستطیل‌های دندانه → `Weld` → دایره داخلی → `Back Minus Front`  
-**Wi-Fi:** سه کمان هم‌مرکز + دایره پایین  
-**Display:** مستطیل قاب + مستطیل داخلی (`Back Minus Front`) + پایه
+`File` → `Import` → SVG → `Ungroup All` → اندازه ۸–۱۶ mm → رنگ K=100
