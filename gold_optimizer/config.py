@@ -27,7 +27,7 @@ TP_ATR_MULT = 2.5
 MAX_OPEN_TRADES = 1
 
 # داده شبیه‌سازی / بک‌تست
-DATA_DAYS = 10  # تعداد روز معاملاتی برای تست
+DATA_DAYS = 30  # یک ماه گذشته
 BARS_PER_DAY = 24 * 60
 RANDOM_SEED = 42
 

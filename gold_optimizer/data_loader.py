@@ -24,7 +24,9 @@ def generate_synthetic_xauusd(
     """داده واقعی‌نما برای طلا با نوسان سشن آمریکا بالاتر."""
     rng = np.random.default_rng(seed)
     n = days * BARS_PER_DAY
-    start = pd.Timestamp("2024-06-03 00:00:00", tz="UTC")
+    # یک ماه منتهی به ۶ آگوست ۲۰۲۶ (هم‌راستا با تاریخ اجرای تست)
+    end = pd.Timestamp("2026-08-06 23:59:00", tz="UTC")
+    start = end - pd.Timedelta(minutes=n - 1)
     idx = pd.date_range(start, periods=n, freq="1min")
 
     # نوسان پایه + تقویت در سشن آمریکا + روند درون‌روزی
