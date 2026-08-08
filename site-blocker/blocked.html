@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مسدود شده</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        color: #e8e8e8;
+        padding: 24px;
+      }
+
+      .card {
+        max-width: 480px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        padding: 48px 36px;
+        backdrop-filter: blur(12px);
+      }
+
+      .icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 12px;
+        color: #fff;
+      }
+
+      .site {
+        display: inline-block;
+        background: rgba(231, 76, 60, 0.2);
+        color: #ff6b6b;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.95rem;
+        margin: 16px 0 24px;
+        direction: ltr;
+      }
+
+      p {
+        line-height: 1.7;
+        color: #b0b8c8;
+        margin-bottom: 8px;
+      }
+
+      .en {
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #8892a4;
+        direction: ltr;
+      }
+
+      a {
+        display: inline-block;
+        margin-top: 28px;
+        color: #74b9ff;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon">🚫</div>
+      <h1>این سایت مسدود است</h1>
+      <div class="site" id="site-name"></div>
+      <p>شما این دامنه را در افزونه Site Blocker مسدود کرده‌اید.</p>
+      <p>برای مدیریت لیست، روی آیکون افزونه کلیک کنید.</p>
+      <p class="en">This site is blocked by Site Blocker extension.</p>
+      <a href="#" id="back">بازگشت</a>
+    </div>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const site = params.get("site") || "این سایت";
+      document.getElementById("site-name").textContent = site;
+      document.getElementById("back").addEventListener("click", (e) => {
+        e.preventDefault();
+        history.length > 1 ? history.back() : (location.href = "chrome://newtab/");
+      });
+    </script>
+  </body>
+</html>

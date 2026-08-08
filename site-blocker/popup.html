@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Site Blocker</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        width: 300px;
+        font-family: system-ui, sans-serif;
+        padding: 16px;
+        background: #f5f6fa;
+      }
+
+      h2 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        font-size: 0.9rem;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #00b894;
+      }
+
+      .dot.off {
+        background: #b2bec3;
+      }
+
+      .count {
+        color: #636e72;
+        font-size: 0.85rem;
+        margin-bottom: 14px;
+      }
+
+      a {
+        display: block;
+        text-align: center;
+        padding: 10px;
+        background: #0984e3;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+
+      a:hover {
+        background: #0770c2;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🛡️ Site Blocker</h2>
+    <div class="status">
+      <div class="dot" id="dot"></div>
+      <span id="status">فعال</span>
+    </div>
+    <p class="count"><span id="count">0</span> سایت مسدود شده</p>
+    <a href="#" id="open-options">مدیریت سایت‌ها</a>
+    <script src="popup.js"></script>
+  </body>
+</html>

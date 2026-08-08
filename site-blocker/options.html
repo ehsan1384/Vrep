@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Site Blocker</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🛡️ Site Blocker</h1>
+        <p>سایت‌هایی که می‌خواهید در Chrome مسدود شوند را اضافه کنید.</p>
+      </header>
+
+      <section class="toggle-section">
+        <label class="toggle">
+          <input type="checkbox" id="enabled" checked />
+          <span class="slider"></span>
+        </label>
+        <span id="status-text">مسدودسازی فعال است</span>
+      </section>
+
+      <section class="add-section">
+        <input
+          type="text"
+          id="domain-input"
+          placeholder="مثال: twitter.com یا youtube.com"
+          dir="ltr"
+        />
+        <button id="add-btn">افزودن</button>
+      </section>
+      <p class="hint">فقط دامنه را وارد کنید، بدون https://</p>
+
+      <section class="list-section">
+        <h2>سایت‌های مسدود (<span id="count">0</span>)</h2>
+        <ul id="domain-list"></ul>
+        <p id="empty-msg" class="empty">هنوز سایتی اضافه نشده.</p>
+      </section>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>
