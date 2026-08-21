@@ -30,7 +30,7 @@ int pivotRight = input.int(5,  "Pivot Right Bars", minval=1, maxval=50, group=GR
 
 // ─── INPUTS: ANCHOR ──────────────────────────────────────────────────────────
 string anchorMode = input.string("Auto", "Anchor Mode", options=["Auto", "Manual"], group=GRP_ANCHOR)
-string autoAnchorSource = input.string("Last Pivot", "Auto Anchor Source",
+string autoAnchorSource = input.string("Most Recent Pivot", "Auto Anchor Source",
      options=["Last Pivot Low", "Last Pivot High", "Most Recent Pivot"], group=GRP_ANCHOR)
 float manualAnchorPrice = input.float(0.0, "Manual Anchor Price (0 = use close)", group=GRP_ANCHOR)
 int   manualAnchorBarsAgo = input.int(50, "Manual Anchor Bars Ago", minval=0, maxval=5000, group=GRP_ANCHOR)
