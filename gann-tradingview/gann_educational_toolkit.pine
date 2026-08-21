@@ -591,10 +591,13 @@ plot(showFan and (mainAnglesOnly ? f_angleEnabled(5) : show_1x2) ? line1x2 : na,
 plot(showFan and not mainAnglesOnly and show_3x1 ? line3x1 : na, "3x1 Line", color=color.new(fanPlotCol, 45), linewidth=1)
 plot(maVal, "MA Confluence", color=color.new(color.white, 60), linewidth=1)
 
-plotshape(showAnchorMark and not na(anchorBar) and bar_index == anchorBar, title="Anchor Point",
-     style=anchorIsLow ? shape.triangleup : shape.triangledown,
-     location=anchorIsLow ? location.belowbar : location.abovebar,
-     color=anchorIsLow ? anchorBullMark : anchorBearMark, size=size.small, text="A")
+// plotshape style/location must be constants — split bull/bear anchor marks
+plotshape(showAnchorMark and not na(anchorBar) and bar_index == anchorBar and anchorIsLow,
+     title="Anchor Low", style=shape.triangleup, location=location.belowbar,
+     color=anchorBullMark, size=size.small, text="A")
+plotshape(showAnchorMark and not na(anchorBar) and bar_index == anchorBar and not anchorIsLow,
+     title="Anchor High", style=shape.triangledown, location=location.abovebar,
+     color=anchorBearMark, size=size.small, text="A")
 
 // ─── ALERTS (bar close only — no repaint) ────────────────────────────────────
 if barstate.isconfirmed
