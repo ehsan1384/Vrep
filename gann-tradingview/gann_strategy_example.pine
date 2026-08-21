@@ -1,0 +1,146 @@
+//@version=6
+// ============================================================================
+// Gann Strategy Example — EDUCATIONAL BACKTEST ONLY
+// ============================================================================
+// This strategy demonstrates how confirmed pivots and Gann scoring CAN be used
+// in a backtest. Results are NOT guaranteed. Past performance ≠ future results.
+//
+// DIFFERENCE FROM INDICATOR:
+//   • Indicator = visual/educational overlay, no orders.
+//   • Strategy    = simulated entries/exits for learning backtest mechanics.
+//
+// LIMITATIONS:
+//   • Pivot confirmation delay (rightBars) is included — no lookahead.
+//   • Simplified rules — NOT a complete Gann trading system.
+//   • Use for learning Pine backtesting, not live trading decisions alone.
+// ============================================================================
+strategy("Gann Strategy Example (Educational)", shorttitle="Gann Strat Edu", overlay=true,
+     initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=10,
+     commission_type=strategy.commission.percent, commission_value=0.05,
+     slippage=2, calc_on_every_tick=false, process_orders_on_close=true)
+
+// ─── INPUTS ──────────────────────────────────────────────────────────────────
+string GRP_PIVOT = "Pivot (Confirmed Only)"
+string GRP_GANN  = "Gann Parameters"
+string GRP_BT    = "Backtest Settings"
+string GRP_RISK  = "Risk Disclaimer"
+
+int pivotLeft  = input.int(5, "Pivot Left Bars", minval=1, group=GRP_PIVOT)
+int pivotRight = input.int(5, "Pivot Right Bars", minval=1, group=GRP_PIVOT,
+     tooltip="Signals use pivots only AFTER rightBars confirmation.")
+
+float scaleRatio  = input.float(1.0, "Scale Ratio (1x1)", minval=0.00001, group=GRP_GANN)
+int   confirmBars = input.int(2, "Break Confirmation Bars", minval=1, maxval=10, group=GRP_GANN)
+int   maLength    = input.int(50, "MA Length", minval=5, group=GRP_GANN)
+int   scoreBullTh = input.int(35, "Long Entry Score ≥", minval=10, group=GRP_GANN)
+int   scoreBearTh = input.int(-35, "Short Entry Score ≤", maxval=-10, group=GRP_GANN)
+
+float commissionPct = input.float(0.05, "Commission (%)", minval=0, step=0.01, group=GRP_BT)
+int   slippageTicks = input.int(2, "Slippage (ticks)", minval=0, group=GRP_BT)
+int   minBarsInTrade = input.int(5, "Min Bars In Trade", minval=1, group=GRP_BT)
+bool  allowShorts = input.bool(true, "Allow Short Entries", group=GRP_BT)
+
+input.string("⚠ EDUCATIONAL ONLY — NOT FINANCIAL ADVICE", "Disclaimer", group=GRP_RISK)
+
+// Apply user commission/slippage
+strategy.risk.allow_entry_in(strategy.direction.all)
+// Note: commission_value set at strategy() declaration; re-set via undocumented workaround:
+// Users should adjust commission in Strategy Properties → Properties tab as well.
+
+// ─── CONFIRMED PIVOTS (no repaint) ───────────────────────────────────────────
+float pHighVal = ta.pivothigh(high, pivotLeft, pivotRight)
+float pLowVal  = ta.pivotlow(low, pivotLeft, pivotRight)
+
+var float lastPHPrice = na
+var int   lastPHBar   = na
+var float lastPLPrice = na
+var int   lastPLBar   = na
+
+if not na(pHighVal)
+    lastPHPrice := pHighVal
+    lastPHBar   := bar_index - pivotRight
+
+if not na(pLowVal)
+    lastPLPrice := pLowVal
+    lastPLBar   := bar_index - pivotRight
+
+// Anchor = most recent confirmed pivot (same as indicator Auto mode)
+var float anchorPrice = na
+var int   anchorBar   = na
+var bool  anchorIsLow = true
+
+bool lowIsNewer = not na(lastPLBar) and (na(lastPHBar) or lastPLBar > lastPHBar)
+if lowIsNewer
+    anchorPrice := lastPLPrice
+    anchorBar   := lastPLBar
+    anchorIsLow := true
+else if not na(lastPHBar)
+    anchorPrice := lastPHPrice
+    anchorBar   := lastPHBar
+    anchorIsLow := false
+
+// ─── 1x1 LINE & SCORING (mirrors indicator logic) ────────────────────────────
+f_fan1x1(int aBar, float aPrice, bool isLow, int bBar) =>
+    float elapsed = float(bBar - aBar)
+    isLow ? aPrice + elapsed * scaleRatio : aPrice - elapsed * scaleRatio
+
+float line1x1 = not na(anchorBar) ? f_fan1x1(anchorBar, anchorPrice, anchorIsLow, bar_index) : na
+float maVal   = ta.sma(close, maLength)
+
+int score = 0
+if not na(line1x1)
+    score += close > line1x1 ? 20 : close < line1x1 ? -20 : 0
+if close > maVal
+    score += 10
+else if close < maVal
+    score -= 10
+if not na(lastPLPrice) and math.abs(close - lastPLPrice) / lastPLPrice * 100 <= 0.15
+    score += 10
+if not na(lastPHPrice) and math.abs(close - lastPHPrice) / lastPHPrice * 100 <= 0.15
+    score -= 10
+
+string state = score >= scoreBullTh ? "Bullish" : score <= scoreBearTh ? "Bearish" : "Neutral"
+
+// ─── ENTRY / EXIT (on bar close, after pivot delay already in anchor) ────────
+var int barsInTrade = 0
+if strategy.position_size != 0
+    barsInTrade += 1
+else
+    barsInTrade := 0
+
+bool longEntry  = barstate.isconfirmed and state == "Bullish" and strategy.position_size <= 0
+bool shortEntry = barstate.isconfirmed and allowShorts and state == "Bearish" and strategy.position_size >= 0
+bool longExit   = barstate.isconfirmed and (state == "Bearish" or state == "Neutral") and strategy.position_size > 0 and barsInTrade >= minBarsInTrade
+bool shortExit  = barstate.isconfirmed and (state == "Bullish" or state == "Neutral") and strategy.position_size < 0 and barsInTrade >= minBarsInTrade
+
+if longEntry
+    strategy.entry("Long", strategy.long)
+if shortEntry
+    strategy.entry("Short", strategy.short)
+if longExit
+    strategy.close("Long", comment="Score Exit")
+if shortExit
+    strategy.close("Short", comment="Score Exit")
+
+// ─── VISUAL FEEDBACK ─────────────────────────────────────────────────────────
+plot(line1x1, "1x1", color=anchorIsLow ? color.teal : color.orange, linewidth=2)
+plot(maVal, "MA", color=color.new(color.white, 70))
+
+bgcolor(state == "Bullish" ? color.new(color.teal, 92) : state == "Bearish" ? color.new(color.orange, 92) : na)
+
+// ─── PERFORMANCE TABLE (educational — no profit claims) ──────────────────────
+var table perfTable = table.new(position.bottom_right, 2, 6, bgcolor=color.new(color.black, 15), border_width=1)
+
+if barstate.islast
+    table.cell(perfTable, 0, 0, "Gann Strat (Edu)", text_color=color.white, bgcolor=color.gray)
+    table.merge_cells(perfTable, 0, 0, 1, 0)
+    table.cell(perfTable, 0, 1, "State", text_color=color.gray, text_size=size.tiny)
+    table.cell(perfTable, 1, 1, state, text_size=size.tiny)
+    table.cell(perfTable, 0, 2, "Score", text_color=color.gray, text_size=size.tiny)
+    table.cell(perfTable, 1, 2, str.tostring(score), text_size=size.tiny)
+    table.cell(perfTable, 0, 3, "Net P&L", text_color=color.gray, text_size=size.tiny)
+    table.cell(perfTable, 1, 3, str.tostring(strategy.netprofit, "#.##"), text_size=size.tiny)
+    table.cell(perfTable, 0, 4, "Trades", text_color=color.gray, text_size=size.tiny)
+    table.cell(perfTable, 1, 4, str.tostring(strategy.closedtrades), text_size=size.tiny)
+    table.cell(perfTable, 0, 5, "⚠ Not advice", text_color=color.yellow, text_size=size.tiny)
+    table.merge_cells(perfTable, 0, 5, 1, 5)

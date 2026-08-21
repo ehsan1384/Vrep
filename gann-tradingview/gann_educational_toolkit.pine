@@ -1,0 +1,624 @@
+//@version=6
+// ============================================================================
+// Gann Educational Toolkit — TradingView Pine Script v6
+// ============================================================================
+// PURPOSE: Educational demonstration of W.D. Gann tools. NOT trading advice.
+// LIMITATIONS (Pine Script / TradingView):
+//   • Max ~500 lines, labels, boxes per script — objects are managed on last bar.
+//   • Manual Anchor Bar uses "bars ago" offset (exact historical bar pick needs chart click).
+//   • Gann angles are approximated as price-per-bar slopes scaled by user Scale Ratio.
+//   • Square of 9 uses the sqrt ± degree/180 formula (educational variant).
+//   • No lookahead: pivots confirmed only after rightBars; alerts on bar close only.
+// ============================================================================
+indicator("Gann Educational Toolkit", shorttitle="Gann Edu", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=100)
+
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+string GRP_PIVOT   = "① Pivot Detection"
+string GRP_ANCHOR  = "② Anchor Point"
+string GRP_FAN     = "③ Gann Fan"
+string GRP_BOX     = "④ Gann Box"
+string GRP_SO9     = "⑤ Square of 9"
+string GRP_CYCLE   = "⑥ Time Cycles"
+string GRP_SCORE   = "⑦ Analysis & Scoring"
+string GRP_VIS     = "⑧ Display"
+string GRP_ALERT   = "⑨ Alerts"
+
+// ─── INPUTS: PIVOT ───────────────────────────────────────────────────────────
+int pivotLeft  = input.int(5,  "Pivot Left Bars",  minval=1, maxval=50, group=GRP_PIVOT)
+int pivotRight = input.int(5,  "Pivot Right Bars", minval=1, maxval=50, group=GRP_PIVOT,
+     tooltip="Pivot is valid ONLY after rightBars confirmation (no repaint).")
+
+// ─── INPUTS: ANCHOR ──────────────────────────────────────────────────────────
+string anchorMode = input.string("Auto", "Anchor Mode", options=["Auto", "Manual"], group=GRP_ANCHOR)
+string autoAnchorSource = input.string("Most Recent Pivot", "Auto Anchor Source",
+     options=["Last Pivot Low", "Last Pivot High", "Most Recent Pivot"], group=GRP_ANCHOR)
+float manualAnchorPrice = input.float(0.0, "Manual Anchor Price (0 = use close)", group=GRP_ANCHOR)
+int   manualAnchorBarsAgo = input.int(50, "Manual Anchor Bars Ago", minval=0, maxval=5000, group=GRP_ANCHOR)
+
+// ─── INPUTS: FAN ─────────────────────────────────────────────────────────────
+bool  showFan      = input.bool(true, "Show Gann Fan", group=GRP_FAN)
+float scaleRatio   = input.float(1.0, "Scale Ratio (price units per bar for 1x1)", minval=0.00001, step=0.1, group=GRP_FAN,
+     tooltip="Adjust until 1x1 visually matches your market's price/time balance.")
+bool  useAutoScale  = input.bool(true, "Auto Scale from ATR", group=GRP_FAN,
+     tooltip="When enabled, Scale Ratio = ATR(14) × Auto Scale Factor (recommended for first use).")
+float autoScaleFactor = input.float(0.15, "Auto Scale Factor (× ATR)", minval=0.01, step=0.05, group=GRP_FAN)
+bool  mainAnglesOnly = input.bool(false, "Show Main Angles Only (1x1, 2x1, 1x2)", group=GRP_FAN)
+int   activeAngleCount = input.int(9, "Active Angle Count", minval=1, maxval=9, group=GRP_FAN)
+
+bool show_1x1 = input.bool(true,  "1x1", group=GRP_FAN, inline="a1")
+bool show_2x1 = input.bool(true,  "2x1", group=GRP_FAN, inline="a1")
+bool show_3x1 = input.bool(true,  "3x1", group=GRP_FAN, inline="a2")
+bool show_4x1 = input.bool(false, "4x1", group=GRP_FAN, inline="a2")
+bool show_8x1 = input.bool(false, "8x1", group=GRP_FAN, inline="a3")
+bool show_1x2 = input.bool(true,  "1x2", group=GRP_FAN, inline="a3")
+bool show_1x3 = input.bool(false, "1x3", group=GRP_FAN, inline="a4")
+bool show_1x4 = input.bool(false, "1x4", group=GRP_FAN, inline="a4")
+bool show_1x8 = input.bool(false, "1x8", group=GRP_FAN, inline="a5")
+
+color bullFanColor = input.color(color.new(#0072B2, 0), "Bullish Fan Color", group=GRP_FAN)
+color bearFanColor = input.color(color.new(#D55E00, 0), "Bearish Fan Color", group=GRP_FAN)
+int   fanWidth     = input.int(1, "Fan Line Width", minval=1, maxval=4, group=GRP_FAN)
+bool  showFanLabels = input.bool(true, "Show Angle Labels", group=GRP_FAN)
+bool  show1x1Info  = input.bool(true, "Show 1x1 Educational Note", group=GRP_FAN)
+
+// ─── INPUTS: BOX ─────────────────────────────────────────────────────────────
+bool showBox    = input.bool(true, "Show Gann Box", group=GRP_BOX)
+int  boxDivisions = input.int(8, "Box Divisions", options=[4, 8, 16], group=GRP_BOX)
+color boxBullColor = input.color(color.new(#0072B2, 85), "Box Bull Zone", group=GRP_BOX)
+color boxBearColor = input.color(color.new(#D55E00, 85), "Box Bear Zone", group=GRP_BOX)
+color boxNeutColor = input.color(color.new(#999999, 90), "Box Neutral Zone", group=GRP_BOX)
+
+// ─── INPUTS: SQUARE OF 9 ─────────────────────────────────────────────────────
+bool  showSo9       = input.bool(true, "Show Square of 9", group=GRP_SO9)
+float so9RefPrice   = input.float(0.0, "Reference Price (0 = last pivot)", group=GRP_SO9)
+int   so9LevelsAbove = input.int(3, "Levels Above", minval=1, maxval=8, group=GRP_SO9)
+int   so9LevelsBelow = input.int(3, "Levels Below", minval=1, maxval=8, group=GRP_SO9)
+string so9DegreeMode = input.string("45", "Degree Step", options=["45", "90"], group=GRP_SO9)
+float so9DegreeStep = so9DegreeMode == "90" ? 90.0 : 45.0
+bool  showSo9Lines  = input.bool(true, "Draw Nearest So9 Lines on Chart", group=GRP_SO9)
+color so9ResColor   = input.color(color.new(#CC79A7, 30), "So9 Resistance Color", group=GRP_SO9)
+color so9SupColor   = input.color(color.new(#009E73, 30), "So9 Support Color", group=GRP_SO9)
+
+// ─── INPUTS: TIME CYCLES ─────────────────────────────────────────────────────
+bool showCycles = input.bool(true, "Show Time Cycles", group=GRP_CYCLE)
+int  maxCycleLines = input.int(6, "Max Future Cycle Lines", minval=1, maxval=12, group=GRP_CYCLE)
+int  cycleProximity = input.int(3, "Cycle Proximity Warning (bars)", minval=1, maxval=20, group=GRP_CYCLE)
+bool cyc9   = input.bool(true,  "Cycle 9",   group=GRP_CYCLE, inline="c1")
+bool cyc18  = input.bool(true,  "Cycle 18",  group=GRP_CYCLE, inline="c1")
+bool cyc30  = input.bool(true,  "Cycle 30",  group=GRP_CYCLE, inline="c2")
+bool cyc45  = input.bool(true,  "Cycle 45",  group=GRP_CYCLE, inline="c2")
+bool cyc60  = input.bool(false, "Cycle 60",  group=GRP_CYCLE, inline="c3")
+bool cyc90  = input.bool(true,  "Cycle 90",  group=GRP_CYCLE, inline="c3")
+bool cyc120 = input.bool(false, "Cycle 120", group=GRP_CYCLE, inline="c4")
+bool cyc144 = input.bool(true,  "Cycle 144", group=GRP_CYCLE, inline="c4")
+bool cyc180 = input.bool(false, "Cycle 180", group=GRP_CYCLE, inline="c5")
+bool cyc360 = input.bool(true,  "Cycle 360", group=GRP_CYCLE, inline="c5")
+
+// ─── INPUTS: SCORING ─────────────────────────────────────────────────────────
+int   confirmBars   = input.int(2, "Break Confirmation Bars", minval=1, maxval=10, group=GRP_SCORE)
+float levelThreshold = input.float(0.15, "Level Proximity Threshold (%)", minval=0.01, step=0.05, group=GRP_SCORE)
+int   maLength      = input.int(50, "MA Length for Confluence", minval=5, maxval=200, group=GRP_SCORE)
+int   scoreBullTh   = input.int(35, "Bullish Score Threshold", minval=10, maxval=80, group=GRP_SCORE)
+int   scoreBearTh   = input.int(-35, "Bearish Score Threshold", maxval=-10, minval=-80, group=GRP_SCORE)
+
+// ─── INPUTS: DISPLAY ─────────────────────────────────────────────────────────
+bool showPanel     = input.bool(true, "Show Info Panel", group=GRP_VIS)
+bool showAnchorMark = input.bool(true, "Mark Anchor Pivot", group=GRP_VIS)
+bool showBreakMarks = input.bool(true, "Mark Fan Breaks", group=GRP_VIS)
+string panelPos    = input.string("top_right", "Panel Position",
+     options=["top_right", "top_left", "bottom_right", "bottom_left"], group=GRP_VIS)
+color anchorBullMark = input.color(color.teal, "Anchor Low Mark", group=GRP_VIS)
+color anchorBearMark = input.color(color.orange, "Anchor High Mark", group=GRP_VIS)
+
+// ─── INPUTS: ALERTS ──────────────────────────────────────────────────────────
+bool alertBreak1x1   = input.bool(true,  "Alert: 1x1 Break", group=GRP_ALERT)
+bool alertBreakOther = input.bool(false, "Alert: Other Angle Breaks", group=GRP_ALERT)
+bool alertSo9Near    = input.bool(true,  "Alert: Near Square of 9 Level", group=GRP_ALERT)
+bool alertCycleNear  = input.bool(true,  "Alert: Near Time Cycle", group=GRP_ALERT)
+bool alertStateChg   = input.bool(true,  "Alert: Bullish/Bearish State Change", group=GRP_ALERT)
+
+// ─── MODULE: PIVOT DETECTION (confirmed only — no repaint) ───────────────────
+float pHighVal = ta.pivothigh(high, pivotLeft, pivotRight)
+float pLowVal  = ta.pivotlow(low, pivotLeft, pivotRight)
+
+var float lastPHPrice = na
+var int   lastPHBar   = na
+var float lastPLPrice = na
+var int   lastPLBar   = na
+
+if not na(pHighVal)
+    lastPHPrice := pHighVal
+    lastPHBar   := bar_index - pivotRight
+
+if not na(pLowVal)
+    lastPLPrice := pLowVal
+    lastPLBar   := bar_index - pivotRight
+
+// ─── MODULE: ANCHOR SELECTION (recomputed each bar + fallback — always visible) ─
+float anchorPrice = na
+int   anchorBar   = na
+bool  anchorIsLow = true
+string anchorDesc = "None"
+bool  anchorIsFallback = false
+
+if anchorMode == "Manual"
+    anchorPrice := manualAnchorPrice > 0 ? manualAnchorPrice : close[manualAnchorBarsAgo]
+    anchorBar   := bar_index - manualAnchorBarsAgo
+    anchorIsLow := anchorPrice <= close
+    anchorDesc  := "Manual"
+else
+    switch autoAnchorSource
+        "Last Pivot Low" =>
+            if not na(lastPLBar)
+                anchorPrice := lastPLPrice
+                anchorBar   := lastPLBar
+                anchorIsLow := true
+                anchorDesc  := "Pivot Low"
+        "Last Pivot High" =>
+            if not na(lastPHBar)
+                anchorPrice := lastPHPrice
+                anchorBar   := lastPHBar
+                anchorIsLow := false
+                anchorDesc  := "Pivot High"
+        "Most Recent Pivot" =>
+            bool lowIsNewer = not na(lastPLBar) and (na(lastPHBar) or lastPLBar > lastPHBar)
+            bool highIsNewer = not na(lastPHBar) and (na(lastPLBar) or lastPHBar > lastPLBar)
+            if lowIsNewer
+                anchorPrice := lastPLPrice
+                anchorBar   := lastPLBar
+                anchorIsLow := true
+                anchorDesc  := "Recent Low"
+            else if highIsNewer
+                anchorPrice := lastPHPrice
+                anchorBar   := lastPHBar
+                anchorIsLow := false
+                anchorDesc  := "Recent High"
+
+// Fallback: always show something until pivots confirm
+if na(anchorBar) or na(anchorPrice)
+    int fbBars = math.min(manualAnchorBarsAgo, bar_index)
+    anchorBar := bar_index - fbBars
+    float swingLo = ta.lowest(low, pivotLeft + pivotRight + 1)[fbBars]
+    float swingHi = ta.highest(high, pivotLeft + pivotRight + 1)[fbBars]
+    anchorIsLow := close >= (swingLo + swingHi) / 2.0
+    anchorPrice := anchorIsLow ? swingLo : swingHi
+    anchorDesc := "Fallback (awaiting pivot)"
+    anchorIsFallback := true
+else
+    anchorIsFallback := false
+
+// ─── MODULE: GANN FAN MATH ───────────────────────────────────────────────────
+float effectiveScale = useAutoScale ? ta.atr(14) * autoScaleFactor : scaleRatio
+
+f_fanPrice(int anchorB, float anchorP, bool isLow, float num, float den, int targetBar) =>
+    float barsElapsed = float(targetBar - anchorB)
+    float slope = effectiveScale * (num / den)
+    isLow ? anchorP + barsElapsed * slope : anchorP - barsElapsed * slope
+
+f_angleEnabled(int idx) =>
+    bool mainOnly = mainAnglesOnly
+    bool r = switch idx
+        0 => show_1x1
+        1 => show_2x1
+        2 => show_3x1
+        3 => show_4x1
+        4 => show_8x1
+        5 => show_1x2
+        6 => show_1x3
+        7 => show_1x4
+        8 => show_1x8
+        => false
+    if mainOnly
+        r and (idx == 0 or idx == 1 or idx == 5)
+    else
+        r
+
+var array<float> angleNums = array.from(1.0, 2.0, 3.0, 4.0, 8.0, 1.0, 1.0, 1.0, 1.0)
+var array<float> angleDens = array.from(1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 4.0, 8.0)
+var array<string> angleNames = array.from("1x1", "2x1", "3x1", "4x1", "8x1", "1x2", "1x3", "1x4", "1x8")
+
+f_activeAngleCount() =>
+    int cnt = 0
+    for i = 0 to 8
+        if f_angleEnabled(i)
+            cnt += 1
+    math.min(cnt, activeAngleCount)
+
+// Current 1x1 value + extra fan plots (always drawn via plot — reliable display)
+float line1x1 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 1.0, 1.0, bar_index) : na
+float line2x1 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 2.0, 1.0, bar_index) : na
+float line1x2 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 1.0, 2.0, bar_index) : na
+float line3x1 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 3.0, 1.0, bar_index) : na
+
+// ─── MODULE: FAN BREAK DETECTION ─────────────────────────────────────────────
+var int stableRegime = 0
+var int stableCount  = 0
+bool break1x1Confirmed = false
+
+bool above1x1 = not na(line1x1) and close > line1x1
+bool below1x1 = not na(line1x1) and close < line1x1
+int  regime   = above1x1 ? 1 : below1x1 ? -1 : 0
+
+break1x1Confirmed := false
+if not na(line1x1) and regime != 0
+    if regime == stableRegime
+        stableCount += 1
+    else
+        if stableCount >= confirmBars and stableRegime != 0
+            break1x1Confirmed := true
+        stableRegime := regime
+        stableCount := 1
+
+// ─── MODULE: SQUARE OF 9 ─────────────────────────────────────────────────────
+f_so9Level(float ref, float deg, bool isAbove) =>
+    float root = math.sqrt(ref)
+    float adj  = isAbove ? root + deg / 180.0 : root - deg / 180.0
+    adj > 0 ? adj * adj : na
+
+float so9Base = so9RefPrice > 0 ? so9RefPrice : (not na(lastPLPrice) ? lastPLPrice : close)
+
+f_nearPct(float price, float level) =>
+    not na(level) and level > 0 ? math.abs(price - level) / level * 100.0 : 100.0
+
+// Find nearest support/resistance from So9
+float nearestSup = na
+float nearestRes = na
+float nearestSupDeg = na
+float nearestResDeg = na
+
+for i = 1 to so9LevelsBelow
+    float deg = so9DegreeStep * i
+    float lvl = f_so9Level(so9Base, deg, false)
+    if not na(lvl) and lvl < close and (na(nearestSup) or lvl > nearestSup)
+        nearestSup := lvl
+        nearestSupDeg := deg
+
+for i = 1 to so9LevelsAbove
+    float deg = so9DegreeStep * i
+    float lvl = f_so9Level(so9Base, deg, true)
+    if not na(lvl) and lvl > close and (na(nearestRes) or lvl < nearestRes)
+        nearestRes := lvl
+        nearestResDeg := deg
+
+bool nearSo9 = f_nearPct(close, nearestSup) <= levelThreshold or f_nearPct(close, nearestRes) <= levelThreshold
+
+// ─── MODULE: TIME CYCLES ─────────────────────────────────────────────────────
+f_cycleEnabled(int c) =>
+    switch c
+        9   => cyc9
+        18  => cyc18
+        30  => cyc30
+        45  => cyc45
+        60  => cyc60
+        90  => cyc90
+        120 => cyc120
+        144 => cyc144
+        180 => cyc180
+        360 => cyc360
+        => false
+
+var array<int> cycleArr = array.from(9, 18, 30, 45, 60, 90, 120, 144, 180, 360)
+
+int timeAnchorBar = not na(anchorBar) ? anchorBar : (not na(lastPLBar) ? lastPLBar : bar_index)
+int nextCycleBars = na
+int nextCycleLen  = na
+bool nearCycle    = false
+
+for i = 0 to array.size(cycleArr) - 1
+    int cLen = array.get(cycleArr, i)
+    if f_cycleEnabled(cLen)
+        int elapsed = bar_index - timeAnchorBar
+        int mod = elapsed % cLen
+        int distToNext = mod == 0 ? 0 : cLen - mod
+        if na(nextCycleBars) or distToNext < nextCycleBars
+            nextCycleBars := distToNext
+            nextCycleLen  := cLen
+        if distToNext <= cycleProximity
+            nearCycle := true
+
+// ─── MODULE: EDUCATIONAL SCORING ─────────────────────────────────────────────
+float maVal = ta.sma(close, maLength)
+int score = 0
+
+if not na(line1x1)
+    score += above1x1 ? 20 : below1x1 ? -20 : 0
+    if break1x1Confirmed
+        score += above1x1 ? 15 : -15
+
+// Confluence: pivot levels
+if not na(lastPLPrice) and f_nearPct(close, lastPLPrice) <= levelThreshold
+    score += 10
+if not na(lastPHPrice) and f_nearPct(close, lastPHPrice) <= levelThreshold
+    score -= 10
+
+// MA confluence
+if close > maVal
+    score += 10
+else if close < maVal
+    score -= 10
+
+// So9 proximity (educational weight only)
+if nearSo9
+    score += close > so9Base ? -5 : 5
+
+// Time cycle proximity
+if nearCycle
+    score += 0  // neutral warning — shown in panel, not directional bias
+
+string marketState = score >= scoreBullTh ? "Bullish" : score <= scoreBearTh ? "Bearish" : "Neutral"
+var string prevState = "Neutral"
+bool stateChanged = bar_index > 10 and marketState != prevState and marketState != "Neutral" and prevState != "Neutral"
+if barstate.isconfirmed
+    prevState := marketState
+
+// Active fan line (nearest support/resistance angle)
+string activeAngle = "1x1"
+float  activeAngleVal = line1x1
+string nextAngleName = ""
+float  nextAngleVal  = na
+
+if not na(anchorBar)
+    for i = 0 to 8
+        if f_angleEnabled(i)
+            float num = array.get(angleNums, i)
+            float den = array.get(angleDens, i)
+            float lv  = f_fanPrice(anchorBar, anchorPrice, anchorIsLow, num, den, bar_index)
+            string nm = array.get(angleNames, i)
+            if anchorIsLow
+                if close >= lv
+                    activeAngle := nm
+                    activeAngleVal := lv
+                else if na(nextAngleVal) or lv > nextAngleVal
+                    nextAngleName := nm
+                    nextAngleVal  := lv
+            else
+                if close <= lv
+                    activeAngle := nm
+                    activeAngleVal := lv
+                else if na(nextAngleVal) or lv < nextAngleVal
+                    nextAngleName := nm
+                    nextAngleVal  := lv
+
+// ─── MODULE: DRAWING (last bar only — object limit management) ───────────────
+var line[]  fanLines  = array.new_line()
+var label[] fanLabels = array.new_label()
+var line[]  boxLines  = array.new_line()
+var box[]   boxZones  = array.new_box()
+var line[]  cycLines  = array.new_line()
+var label[] cycLabels = array.new_label()
+var line[]  so9HLines = array.new_line()
+var label   anchorLbl = na
+var label   info1x1Lbl = na
+var table   infoPanel  = na
+
+f_delLines(line[] arr) =>
+    while array.size(arr) > 0
+        line.delete(array.pop(arr))
+
+f_delLabels(label[] arr) =>
+    while array.size(arr) > 0
+        label.delete(array.pop(arr))
+
+f_delBoxes(box[] arr) =>
+    while array.size(arr) > 0
+        box.delete(array.pop(arr))
+
+f_panelPos(string pos) =>
+    switch pos
+        "top_left"     => position.top_left
+        "bottom_right" => position.bottom_right
+        "bottom_left"  => position.bottom_left
+        => position.top_right
+
+if barstate.islast
+    float chartLo = ta.lowest(low, math.min(500, bar_index + 1))
+    float chartHi = ta.highest(high, math.min(500, bar_index + 1))
+    int   drawEnd   = bar_index + 50
+
+    // Cleanup previous drawings
+    f_delLines(fanLines)
+    f_delLabels(fanLabels)
+    f_delLines(boxLines)
+    f_delBoxes(boxZones)
+    f_delLines(cycLines)
+    f_delLabels(cycLabels)
+    f_delLines(so9HLines)
+    if not na(anchorLbl)
+        label.delete(anchorLbl)
+        anchorLbl := na
+    if not na(info1x1Lbl)
+        label.delete(info1x1Lbl)
+        info1x1Lbl := na
+
+    color fanCol = anchorIsLow ? bullFanColor : bearFanColor
+    int drawn = 0
+
+    // ── Gann Fan ──
+    if showFan and not na(anchorBar)
+        for i = 0 to 8
+            if f_angleEnabled(i) and drawn < activeAngleCount
+                float num = array.get(angleNums, i)
+                float den = array.get(angleDens, i)
+                string nm = array.get(angleNames, i)
+                float y1 = f_fanPrice(anchorBar, anchorPrice, anchorIsLow, num, den, anchorBar)
+                float y2 = f_fanPrice(anchorBar, anchorPrice, anchorIsLow, num, den, drawEnd)
+                color lc = i == 0 ? color.new(fanCol, 0) : color.new(fanCol, 30 + i * 5)
+                line ln = line.new(anchorBar, y1, drawEnd, y2, color=lc, width=i == 0 ? fanWidth + 1 : fanWidth, extend=extend.right, xloc=xloc.bar_index)
+                array.push(fanLines, ln)
+                if showFanLabels
+                    label lb = label.new(bar_index + 5, y2, nm, style=label.style_label_left, color=color.new(fanCol, 70), textcolor=fanCol, size=size.tiny)
+                    array.push(fanLabels, lb)
+                drawn += 1
+
+        if show1x1Info
+            string fbNote = anchorIsFallback ? "\n(awaiting pivot confirm)" : ""
+            info1x1Lbl := label.new(bar_index, high, "1x1 = Price/Time Balance\nScale=" + str.tostring(effectiveScale, "#.####") + fbNote,
+                 style=label.style_label_down, color=color.new(color.yellow, 80), textcolor=color.black, size=size.small)
+
+    // ── Anchor mark ──
+    if showAnchorMark and not na(anchorBar)
+        color mk = anchorIsLow ? anchorBullMark : anchorBearMark
+        anchorLbl := label.new(anchorBar, anchorPrice, "Anchor\n" + anchorDesc,
+             style=anchorIsLow ? label.style_label_up : label.style_label_down,
+             color=color.new(mk, 60), textcolor=mk, size=size.normal)
+
+    // ── Break mark ──
+    if showBreakMarks and break1x1Confirmed
+        label.new(bar_index, close, "1x1 Break", style=label.style_label_center,
+             color=color.new(color.red, 70), textcolor=color.white, size=size.tiny)
+
+    // ── Gann Box ──
+    if showBox and not na(lastPHBar) and not na(lastPLBar)
+        int b1 = lastPHBar
+        int b2 = lastPLBar
+        float p1 = lastPHPrice
+        float p2 = lastPLPrice
+        if b2 < b1
+            b1 := lastPLBar
+            b2 := lastPHBar
+            p1 := lastPLPrice
+            p2 := lastPHPrice
+        float topP = math.max(p1, p2)
+        float botP = math.min(p1, p2)
+        float prRange = topP - botP
+        int   tmRange = b2 - b1
+        if tmRange > 0 and prRange > 0
+            // Zone coloring: upper=bear, lower=bull, mid=neutral
+            box bBull = box.new(b1, botP, b2, botP + prRange / 3.0, bgcolor=boxBullColor, border_color=na)
+            box bNeut = box.new(b1, botP + prRange / 3.0, b2, botP + 2.0 * prRange / 3.0, bgcolor=boxNeutColor, border_color=na)
+            box bBear = box.new(b1, botP + 2.0 * prRange / 3.0, b2, topP, bgcolor=boxBearColor, border_color=na)
+            array.push(boxZones, bBull)
+            array.push(boxZones, bNeut)
+            array.push(boxZones, bBear)
+            box outer = box.new(b1, botP, b2, topP, bgcolor=na, border_color=color.gray, border_width=1)
+            array.push(boxZones, outer)
+            for d = 1 to boxDivisions - 1
+                float yDiv = botP + prRange * d / boxDivisions
+                int   xDiv = b1 + int(tmRange * d / boxDivisions)
+                array.push(boxLines, line.new(b1, yDiv, b2, yDiv, color=color.new(color.gray, 60), width=1, style=line.style_dotted))
+                array.push(boxLines, line.new(xDiv, botP, xDiv, topP, color=color.new(color.gray, 60), width=1, style=line.style_dotted))
+
+    // ── Time Cycles ──
+    if showCycles
+        int drawnCyc = 0
+        for i = 0 to array.size(cycleArr) - 1
+            int cLen = array.get(cycleArr, i)
+            if f_cycleEnabled(cLen) and drawnCyc < maxCycleLines
+                int elapsed = bar_index - timeAnchorBar
+                int nextMult = int(math.ceil(float(elapsed + 1) / cLen))
+                int cycBar = timeAnchorBar + nextMult * cLen
+                if cycBar >= bar_index
+                    color cc = (cycBar - bar_index) <= cycleProximity ? color.new(color.yellow, 0) : color.new(color.purple, 50)
+                    array.push(cycLines, line.new(cycBar, chartLo, cycBar, chartHi, color=cc, width=1, style=line.style_dashed, extend=extend.both, xloc=xloc.bar_index))
+                    array.push(cycLabels, label.new(cycBar, high, "C" + str.tostring(cLen), style=label.style_label_down, color=color.new(cc, 70), textcolor=cc, size=size.tiny))
+                    drawnCyc += 1
+
+    // ── Square of 9 lines (nearest only) ──
+    if showSo9 and showSo9Lines
+        if not na(nearestSup)
+            array.push(so9HLines, line.new(bar_index - 100, nearestSup, bar_index + 20, nearestSup, color=so9SupColor, width=1, style=line.style_dashed, extend=extend.right))
+        if not na(nearestRes)
+            array.push(so9HLines, line.new(bar_index - 100, nearestRes, bar_index + 20, nearestRes, color=so9ResColor, width=1, style=line.style_dashed, extend=extend.right))
+
+    // ── Info Panel ──
+    if showPanel
+        if not na(infoPanel)
+            table.delete(infoPanel)
+        infoPanel := table.new(f_panelPos(panelPos), 2, 18, bgcolor=color.new(color.black, 10), border_width=1)
+
+        table.cell(infoPanel, 0, 0, "Gann Edu Panel", text_color=color.white, text_size=size.small, bgcolor=color.new(color.gray, 40))
+        table.merge_cells(infoPanel, 0, 0, 1, 0)
+
+        table.cell(infoPanel, 0, 1, "Trend", text_color=color.gray, text_size=size.tiny)
+        color stCol = marketState == "Bullish" ? color.teal : marketState == "Bearish" ? color.orange : color.gray
+        table.cell(infoPanel, 1, 1, marketState, text_color=stCol, text_size=size.small)
+
+        table.cell(infoPanel, 0, 2, "Anchor", text_color=color.gray, text_size=size.tiny)
+        table.cell(infoPanel, 1, 2, anchorDesc + " @ " + str.tostring(anchorPrice, format.mintick), text_color=color.white, text_size=size.tiny)
+
+        table.cell(infoPanel, 0, 3, "Active Angle", text_color=color.gray, text_size=size.tiny)
+        table.cell(infoPanel, 1, 3, activeAngle, text_color=color.white, text_size=size.tiny)
+
+        table.cell(infoPanel, 0, 4, "Scale Ratio", text_color=color.gray, text_size=size.tiny)
+        table.cell(infoPanel, 1, 4, str.tostring(effectiveScale, "#.####") + (useAutoScale ? " (ATR)" : ""), text_color=color.white, text_size=size.tiny)
+
+        table.cell(infoPanel, 0, 5, "Support", text_color=color.gray, text_size=size.tiny)
+        string supTxt = not na(nearestSup) ? str.tostring(nearestSup, format.mintick) + " (" + str.tostring(nearestSupDeg, "#") + "°)" : str.tostring(activeAngleVal, format.mintick)
+        table.cell(infoPanel, 1, 5, supTxt, text_color=color.teal, text_size=size.tiny)
+
+        table.cell(infoPanel, 0, 6, "Resistance", text_color=color.gray, text_size=size.tiny)
+        string resTxt = not na(nearestRes) ? str.tostring(nearestRes, format.mintick) + " (" + str.tostring(nearestResDeg, "#") + "°)" : (not na(nextAngleVal) ? str.tostring(nextAngleVal, format.mintick) + " (" + nextAngleName + ")" : "—")
+        table.cell(infoPanel, 1, 6, resTxt, text_color=color.orange, text_size=size.tiny)
+
+        table.cell(infoPanel, 0, 7, "Next Cycle", text_color=color.gray, text_size=size.tiny)
+        string cycTxt = not na(nextCycleLen) ? str.tostring(nextCycleBars) + " bars (C" + str.tostring(nextCycleLen) + ")" : "—"
+        table.cell(infoPanel, 1, 7, cycTxt, text_color=nearCycle ? color.yellow : color.white, text_size=size.tiny)
+
+        table.cell(infoPanel, 0, 8, "Score", text_color=color.gray, text_size=size.tiny)
+        table.cell(infoPanel, 1, 8, str.tostring(score), text_color=stCol, text_size=size.small)
+
+        table.cell(infoPanel, 0, 9, "1x1 Value", text_color=color.gray, text_size=size.tiny)
+        table.cell(infoPanel, 1, 9, not na(line1x1) ? str.tostring(line1x1, format.mintick) : "—", text_color=color.white, text_size=size.tiny)
+
+        // Square of 9 sub-table
+        table.cell(infoPanel, 0, 10, "Square of 9", text_color=color.white, text_size=size.tiny, bgcolor=color.new(color.purple, 60))
+        table.merge_cells(infoPanel, 0, 10, 1, 10)
+        table.cell(infoPanel, 0, 11, "Ref: " + str.tostring(so9Base, format.mintick), text_color=color.gray, text_size=size.tiny)
+        table.merge_cells(infoPanel, 0, 11, 1, 11)
+
+        int rowSo9 = 12
+        int maxSo9Rows = math.min(so9LevelsAbove, 2)
+        for i = 1 to maxSo9Rows
+            float deg = so9DegreeStep * i
+            float lvl = f_so9Level(so9Base, deg, true)
+            table.cell(infoPanel, 0, rowSo9, "+" + str.tostring(deg, "#") + "°", text_color=color.orange, text_size=size.tiny)
+            table.cell(infoPanel, 1, rowSo9, str.tostring(lvl, format.mintick), text_color=color.orange, text_size=size.tiny)
+            rowSo9 += 1
+
+        if anchorIsFallback
+            table.cell(infoPanel, 0, rowSo9, "Status", text_color=color.yellow, text_size=size.tiny)
+            table.cell(infoPanel, 1, rowSo9, "Awaiting pivot confirm", text_color=color.yellow, text_size=size.tiny)
+            rowSo9 += 1
+
+        table.cell(infoPanel, 0, rowSo9, "⚠ Educational Only", text_color=color.yellow, text_size=size.tiny)
+        table.merge_cells(infoPanel, 0, rowSo9, 1, rowSo9)
+
+// ─── PLOT: fan lines via plot() — always visible on every bar ────────────────
+color fanPlotCol = anchorIsLow ? bullFanColor : bearFanColor
+plot(showFan and f_angleEnabled(0) ? line1x1 : na, "1x1 Line", color=fanPlotCol, linewidth=2)
+plot(showFan and (mainAnglesOnly ? f_angleEnabled(1) : show_2x1) ? line2x1 : na, "2x1 Line", color=color.new(fanPlotCol, 20), linewidth=1)
+plot(showFan and (mainAnglesOnly ? f_angleEnabled(5) : show_1x2) ? line1x2 : na, "1x2 Line", color=color.new(fanPlotCol, 35), linewidth=1)
+plot(showFan and not mainAnglesOnly and show_3x1 ? line3x1 : na, "3x1 Line", color=color.new(fanPlotCol, 45), linewidth=1)
+plot(maVal, "MA Confluence", color=color.new(color.white, 60), linewidth=1)
+
+// plotshape style/location must be constants — split bull/bear anchor marks
+plotshape(showAnchorMark and not na(anchorBar) and bar_index == anchorBar and anchorIsLow,
+     title="Anchor Low", style=shape.triangleup, location=location.belowbar,
+     color=anchorBullMark, size=size.small, text="A")
+plotshape(showAnchorMark and not na(anchorBar) and bar_index == anchorBar and not anchorIsLow,
+     title="Anchor High", style=shape.triangledown, location=location.abovebar,
+     color=anchorBearMark, size=size.small, text="A")
+
+// ─── ALERTS (bar close only — no repaint) ────────────────────────────────────
+if barstate.isconfirmed
+    string sym  = syminfo.ticker
+    string tf   = timeframe.period
+    string px   = str.tostring(close, format.mintick)
+
+    if alertBreak1x1 and break1x1Confirmed
+        alert("Gann Edu | " + sym + " " + tf + " | 1x1 Break | Price: " + px + " | State: " + marketState, alert.freq_once_per_bar_close)
+
+    if alertSo9Near and nearSo9
+        alert("Gann Edu | " + sym + " " + tf + " | Near Square of 9 Level | Price: " + px, alert.freq_once_per_bar_close)
+
+    if alertCycleNear and nearCycle
+        alert("Gann Edu | " + sym + " " + tf + " | Near Time Cycle C" + str.tostring(nextCycleLen) + " | Bars left: " + str.tostring(nextCycleBars), alert.freq_once_per_bar_close)
+
+    if alertStateChg and stateChanged
+        alert("Gann Edu | " + sym + " " + tf + " | State Change → " + marketState + " | Price: " + px + " | Score: " + str.tostring(score), alert.freq_once_per_bar_close)
+
+// Static alertconditions for TradingView alert UI
+alertcondition(break1x1Confirmed and barstate.isconfirmed, title="1x1 Break (Educational)", message="Gann 1x1 break — check chart for details.")
+alertcondition(nearSo9 and barstate.isconfirmed, title="Near Square of 9", message="Price near Square of 9 level.")
+alertcondition(nearCycle and barstate.isconfirmed, title="Near Time Cycle", message="Approaching Gann time cycle.")
+alertcondition(stateChanged and barstate.isconfirmed, title="State Change", message="Market state changed (educational score).")
