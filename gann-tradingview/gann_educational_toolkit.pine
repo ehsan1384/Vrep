@@ -39,6 +39,9 @@ int   manualAnchorBarsAgo = input.int(50, "Manual Anchor Bars Ago", minval=0, ma
 bool  showFan      = input.bool(true, "Show Gann Fan", group=GRP_FAN)
 float scaleRatio   = input.float(1.0, "Scale Ratio (price units per bar for 1x1)", minval=0.00001, step=0.1, group=GRP_FAN,
      tooltip="Adjust until 1x1 visually matches your market's price/time balance.")
+bool  useAutoScale  = input.bool(true, "Auto Scale from ATR", group=GRP_FAN,
+     tooltip="When enabled, Scale Ratio = ATR(14) × Auto Scale Factor (recommended for first use).")
+float autoScaleFactor = input.float(0.15, "Auto Scale Factor (× ATR)", minval=0.01, step=0.05, group=GRP_FAN)
 bool  mainAnglesOnly = input.bool(false, "Show Main Angles Only (1x1, 2x1, 1x2)", group=GRP_FAN)
 int   activeAngleCount = input.int(9, "Active Angle Count", minval=1, maxval=9, group=GRP_FAN)
 
@@ -131,11 +134,12 @@ if not na(pLowVal)
     lastPLPrice := pLowVal
     lastPLBar   := bar_index - pivotRight
 
-// ─── MODULE: ANCHOR SELECTION ────────────────────────────────────────────────
-var float anchorPrice = na
-var int   anchorBar   = na
-var bool  anchorIsLow = true   // true = bullish fan from low, false = bearish from high
-var string anchorDesc = "None"
+// ─── MODULE: ANCHOR SELECTION (recomputed each bar + fallback — always visible) ─
+float anchorPrice = na
+int   anchorBar   = na
+bool  anchorIsLow = true
+string anchorDesc = "None"
+bool  anchorIsFallback = false
 
 if anchorMode == "Manual"
     anchorPrice := manualAnchorPrice > 0 ? manualAnchorPrice : close[manualAnchorBarsAgo]
@@ -170,10 +174,25 @@ else
                 anchorIsLow := false
                 anchorDesc  := "Recent High"
 
+// Fallback: always show something until pivots confirm
+if na(anchorBar) or na(anchorPrice)
+    int fbBars = math.min(manualAnchorBarsAgo, bar_index)
+    anchorBar := bar_index - fbBars
+    float swingLo = ta.lowest(low, pivotLeft + pivotRight + 1)[fbBars]
+    float swingHi = ta.highest(high, pivotLeft + pivotRight + 1)[fbBars]
+    anchorIsLow := close >= (swingLo + swingHi) / 2.0
+    anchorPrice := anchorIsLow ? swingLo : swingHi
+    anchorDesc := "Fallback (awaiting pivot)"
+    anchorIsFallback := true
+else
+    anchorIsFallback := false
+
 // ─── MODULE: GANN FAN MATH ───────────────────────────────────────────────────
+float effectiveScale = useAutoScale ? ta.atr(14) * autoScaleFactor : scaleRatio
+
 f_fanPrice(int anchorB, float anchorP, bool isLow, float num, float den, int targetBar) =>
     float barsElapsed = float(targetBar - anchorB)
-    float slope = scaleRatio * (num / den)
+    float slope = effectiveScale * (num / den)
     isLow ? anchorP + barsElapsed * slope : anchorP - barsElapsed * slope
 
 f_angleEnabled(int idx) =>
@@ -205,8 +224,11 @@ f_activeAngleCount() =>
             cnt += 1
     math.min(cnt, activeAngleCount)
 
-// Current 1x1 value
+// Current 1x1 value + extra fan plots (always drawn via plot — reliable display)
 float line1x1 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 1.0, 1.0, bar_index) : na
+float line2x1 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 2.0, 1.0, bar_index) : na
+float line1x2 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 1.0, 2.0, bar_index) : na
+float line3x1 = not na(anchorBar) ? f_fanPrice(anchorBar, anchorPrice, anchorIsLow, 3.0, 1.0, bar_index) : na
 
 // ─── MODULE: FAN BREAK DETECTION ─────────────────────────────────────────────
 var int stableRegime = 0
@@ -332,7 +354,7 @@ if barstate.isconfirmed
 // Active fan line (nearest support/resistance angle)
 string activeAngle = "1x1"
 float  activeAngleVal = line1x1
-string nextAngleName = na
+string nextAngleName = ""
 float  nextAngleVal  = na
 
 if not na(anchorBar)
@@ -389,6 +411,10 @@ f_panelPos(string pos) =>
         => position.top_right
 
 if barstate.islast
+    float chartLo = ta.lowest(low, math.min(500, bar_index + 1))
+    float chartHi = ta.highest(high, math.min(500, bar_index + 1))
+    int   drawEnd   = bar_index + 50
+
     // Cleanup previous drawings
     f_delLines(fanLines)
     f_delLabels(fanLabels)
@@ -415,9 +441,9 @@ if barstate.islast
                 float den = array.get(angleDens, i)
                 string nm = array.get(angleNames, i)
                 float y1 = f_fanPrice(anchorBar, anchorPrice, anchorIsLow, num, den, anchorBar)
-                float y2 = f_fanPrice(anchorBar, anchorPrice, anchorIsLow, num, den, bar_index + 20)
+                float y2 = f_fanPrice(anchorBar, anchorPrice, anchorIsLow, num, den, drawEnd)
                 color lc = i == 0 ? color.new(fanCol, 0) : color.new(fanCol, 30 + i * 5)
-                line ln = line.new(anchorBar, y1, bar_index + 20, y2, color=lc, width=i == 0 ? fanWidth + 1 : fanWidth, extend=extend.right)
+                line ln = line.new(anchorBar, y1, drawEnd, y2, color=lc, width=i == 0 ? fanWidth + 1 : fanWidth, extend=extend.right, xloc=xloc.bar_index)
                 array.push(fanLines, ln)
                 if showFanLabels
                     label lb = label.new(bar_index + 5, y2, nm, style=label.style_label_left, color=color.new(fanCol, 70), textcolor=fanCol, size=size.tiny)
@@ -425,7 +451,8 @@ if barstate.islast
                 drawn += 1
 
         if show1x1Info
-            info1x1Lbl := label.new(bar_index, high, "1x1 = Price/Time Balance\nScale=" + str.tostring(scaleRatio, "#.####"),
+            string fbNote = anchorIsFallback ? "\n(awaiting pivot confirm)" : ""
+            info1x1Lbl := label.new(bar_index, high, "1x1 = Price/Time Balance\nScale=" + str.tostring(effectiveScale, "#.####") + fbNote,
                  style=label.style_label_down, color=color.new(color.yellow, 80), textcolor=color.black, size=size.small)
 
     // ── Anchor mark ──
@@ -482,7 +509,7 @@ if barstate.islast
                 int cycBar = timeAnchorBar + nextMult * cLen
                 if cycBar >= bar_index
                     color cc = (cycBar - bar_index) <= cycleProximity ? color.new(color.yellow, 0) : color.new(color.purple, 50)
-                    array.push(cycLines, line.new(cycBar, low, cycBar, high, color=cc, width=1, style=line.style_dashed, extend=extend.both))
+                    array.push(cycLines, line.new(cycBar, chartLo, cycBar, chartHi, color=cc, width=1, style=line.style_dashed, extend=extend.both, xloc=xloc.bar_index))
                     array.push(cycLabels, label.new(cycBar, high, "C" + str.tostring(cLen), style=label.style_label_down, color=color.new(cc, 70), textcolor=cc, size=size.tiny))
                     drawnCyc += 1
 
@@ -497,7 +524,7 @@ if barstate.islast
     if showPanel
         if not na(infoPanel)
             table.delete(infoPanel)
-        infoPanel := table.new(f_panelPos(panelPos), 2, 14, bgcolor=color.new(color.black, 10), border_width=1)
+        infoPanel := table.new(f_panelPos(panelPos), 2, 18, bgcolor=color.new(color.black, 10), border_width=1)
 
         table.cell(infoPanel, 0, 0, "Gann Edu Panel", text_color=color.white, text_size=size.small, bgcolor=color.new(color.gray, 40))
         table.merge_cells(infoPanel, 0, 0, 1, 0)
@@ -513,14 +540,14 @@ if barstate.islast
         table.cell(infoPanel, 1, 3, activeAngle, text_color=color.white, text_size=size.tiny)
 
         table.cell(infoPanel, 0, 4, "Scale Ratio", text_color=color.gray, text_size=size.tiny)
-        table.cell(infoPanel, 1, 4, str.tostring(scaleRatio, "#.####"), text_color=color.white, text_size=size.tiny)
+        table.cell(infoPanel, 1, 4, str.tostring(effectiveScale, "#.####") + (useAutoScale ? " (ATR)" : ""), text_color=color.white, text_size=size.tiny)
 
         table.cell(infoPanel, 0, 5, "Support", text_color=color.gray, text_size=size.tiny)
         string supTxt = not na(nearestSup) ? str.tostring(nearestSup, format.mintick) + " (" + str.tostring(nearestSupDeg, "#") + "°)" : str.tostring(activeAngleVal, format.mintick)
         table.cell(infoPanel, 1, 5, supTxt, text_color=color.teal, text_size=size.tiny)
 
         table.cell(infoPanel, 0, 6, "Resistance", text_color=color.gray, text_size=size.tiny)
-        string resTxt = not na(nearestRes) ? str.tostring(nearestRes, format.mintick) + " (" + str.tostring(nearestResDeg, "#") + "°)" : (not na(nextAngleVal) ? str.tostring(nextAngleVal, format.mintick) + " (" + str.tostring(nextAngleName) + ")" : "—")
+        string resTxt = not na(nearestRes) ? str.tostring(nearestRes, format.mintick) + " (" + str.tostring(nearestResDeg, "#") + "°)" : (not na(nextAngleVal) ? str.tostring(nextAngleVal, format.mintick) + " (" + nextAngleName + ")" : "—")
         table.cell(infoPanel, 1, 6, resTxt, text_color=color.orange, text_size=size.tiny)
 
         table.cell(infoPanel, 0, 7, "Next Cycle", text_color=color.gray, text_size=size.tiny)
@@ -540,19 +567,34 @@ if barstate.islast
         table.merge_cells(infoPanel, 0, 11, 1, 11)
 
         int rowSo9 = 12
-        for i = 1 to math.min(so9LevelsAbove, 3)
+        int maxSo9Rows = math.min(so9LevelsAbove, 2)
+        for i = 1 to maxSo9Rows
             float deg = so9DegreeStep * i
             float lvl = f_so9Level(so9Base, deg, true)
             table.cell(infoPanel, 0, rowSo9, "+" + str.tostring(deg, "#") + "°", text_color=color.orange, text_size=size.tiny)
             table.cell(infoPanel, 1, rowSo9, str.tostring(lvl, format.mintick), text_color=color.orange, text_size=size.tiny)
             rowSo9 += 1
 
+        if anchorIsFallback
+            table.cell(infoPanel, 0, rowSo9, "Status", text_color=color.yellow, text_size=size.tiny)
+            table.cell(infoPanel, 1, rowSo9, "Awaiting pivot confirm", text_color=color.yellow, text_size=size.tiny)
+            rowSo9 += 1
+
         table.cell(infoPanel, 0, rowSo9, "⚠ Educational Only", text_color=color.yellow, text_size=size.tiny)
         table.merge_cells(infoPanel, 0, rowSo9, 1, rowSo9)
 
-// ─── PLOT: 1x1 reference (always visible, lightweight) ───────────────────────
-plot(showFan ? line1x1 : na, "1x1 Line", color=anchorIsLow ? bullFanColor : bearFanColor, linewidth=2)
+// ─── PLOT: fan lines via plot() — always visible on every bar ────────────────
+color fanPlotCol = anchorIsLow ? bullFanColor : bearFanColor
+plot(showFan and f_angleEnabled(0) ? line1x1 : na, "1x1 Line", color=fanPlotCol, linewidth=2)
+plot(showFan and (mainAnglesOnly ? f_angleEnabled(1) : show_2x1) ? line2x1 : na, "2x1 Line", color=color.new(fanPlotCol, 20), linewidth=1)
+plot(showFan and (mainAnglesOnly ? f_angleEnabled(5) : show_1x2) ? line1x2 : na, "1x2 Line", color=color.new(fanPlotCol, 35), linewidth=1)
+plot(showFan and not mainAnglesOnly and show_3x1 ? line3x1 : na, "3x1 Line", color=color.new(fanPlotCol, 45), linewidth=1)
 plot(maVal, "MA Confluence", color=color.new(color.white, 60), linewidth=1)
+
+plotshape(showAnchorMark and not na(anchorBar) and bar_index == anchorBar, title="Anchor Point",
+     style=anchorIsLow ? shape.triangleup : shape.triangledown,
+     location=anchorIsLow ? location.belowbar : location.abovebar,
+     color=anchorIsLow ? anchorBullMark : anchorBearMark, size=size.small, text="A")
 
 // ─── ALERTS (bar close only — no repaint) ────────────────────────────────────
 if barstate.isconfirmed
