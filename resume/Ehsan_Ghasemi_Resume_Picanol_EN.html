@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ehsan Ghasemi Firozabadi — Resume (Picanol)</title>
+  <style>
+    :root {
+      --ink: #1a2332;
+      --muted: #5a6577;
+      --line: #d5dbe3;
+      --accent: #0b4f6c;
+      --soft: #e8f1f5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #e9edf2;
+      color: var(--ink);
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-size: 9.7pt;
+      line-height: 1.38;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 12px auto;
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 11mm 12mm 10mm;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 28mm 1fr;
+      gap: 6mm;
+      align-items: center;
+      border-bottom: 2.5px solid var(--accent);
+      padding-bottom: 4.5mm;
+      margin-bottom: 3.5mm;
+    }
+    .photo {
+      width: 28mm;
+      height: 34mm;
+      object-fit: cover;
+      object-position: center top;
+      border: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 1.5mm;
+      font-size: 17.5pt;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .headline {
+      margin: 0 0 2mm;
+      font-size: 10pt;
+      font-weight: 600;
+    }
+    .contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2mm 4mm;
+      color: var(--muted);
+      font-size: 8.8pt;
+    }
+    h2 {
+      margin: 3.8mm 0 1.8mm;
+      font-size: 10pt;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 1mm;
+    }
+    .summary { margin: 0; text-align: justify; }
+    .job { margin-bottom: 2.5mm; }
+    .job-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 3mm;
+      align-items: baseline;
+    }
+    .job-title { font-weight: 700; }
+    .job-company { color: var(--muted); }
+    .job-dates { color: var(--muted); font-size: 8.8pt; white-space: nowrap; }
+    ul { margin: 1mm 0 0; padding-left: 4.2mm; }
+    li { margin-bottom: .7mm; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 0 7mm;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 24mm 1fr;
+      gap: 1mm 2.5mm;
+    }
+    .skills-grid dt { font-weight: 700; color: var(--accent); }
+    .skills-grid dd { margin: 0; }
+    .meta-row, .edu-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 3mm;
+      margin-bottom: 1mm;
+    }
+    .meta-label { font-weight: 600; }
+    .cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 5mm;
+    }
+    .cols-2 ul { margin-top: 0; }
+    footer {
+      margin-top: 3.5mm;
+      font-size: 8pt;
+      color: var(--muted);
+      text-align: center;
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; width: auto; min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <img class="photo" src="photo.jpg" alt="Ehsan Ghasemi Firozabadi" />
+      <div>
+        <h1>Ehsan Ghasemi Firozabadi</h1>
+        <p class="headline">Mechatronics Engineer · Industrial Automation · Textile Machinery Specialist</p>
+        <div class="contact">
+          <span>Yazd, Iran</span>
+          <span>e.ghasemi.f@gmail.com</span>
+          <span>+98 913 356 5130</span>
+          <span>No.225, Park Elm, Motahari St, Yazd, 8917697998</span>
+        </div>
+      </div>
+    </header>
+
+    <h2>Professional Summary</h2>
+    <p class="summary">
+      From the start of my undergraduate studies, I joined the university robotics team and earned multiple awards in robotics competitions during my B.Sc. Based on those achievements, I was admitted to a Master’s program without an entrance exam. After graduation I entered industry, worked for several years across different companies and sectors, then founded my own company, where I now serve as CEO. I have designed and built a wide range of machines for various industries and proposed many ideas to improve performance. I am a mechatronics engineer skilled in software and hardware programming, mechanical design, and electronic PCB design, with a primary passion for ideation and building new machines.
+    </p>
+
+    <h2>Work Experience</h2>
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="job-title">CEO</span>
+          <span class="job-company">— Madiar Mechatronic Company, Yazd</span>
+        </div>
+        <div class="job-dates">2016 – Present</div>
+      </div>
+      <ul>
+        <li>Lead mechatronics projects across electronics design, hardware/software programming, and machine integration.</li>
+        <li>Deliver textile-machinery upgrades and industrial automation systems for manufacturing clients.</li>
+      </ul>
+    </div>
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="job-title">Electronics Designer / Hardware &amp; Mechanics Programmer</span>
+          <span class="job-company">— Novin Ara Pardazesh Isatis, Yazd</span>
+        </div>
+        <div class="job-dates">mid 2013 – 2016</div>
+      </div>
+      <ul>
+        <li>Designed electronic boards and programmed controllers for custom industrial machines.</li>
+        <li>Supported mechanical design (SolidWorks) and pneumatic subsystems through commissioning.</li>
+      </ul>
+    </div>
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="job-title">Electronics &amp; Electrical Designer</span>
+          <span class="job-company">— Ghaemiyeh Factory (Taft), Yazd</span>
+        </div>
+        <div class="job-dates">2012 – mid 2013</div>
+      </div>
+      <ul>
+        <li>Designed electrical/electronic solutions for factory production equipment.</li>
+      </ul>
+    </div>
+
+    <h2>Textile / Weaving Projects</h2>
+    <ul>
+      <li>Built a 4-color weft selector for weaving machines, USB-programmable and installable on all weaving machines</li>
+      <li>Built a weft selector for Jacquard weaving machines</li>
+      <li>Built waste/scrap scissors for weaving machines</li>
+      <li>Built a dedicated encoder for Dornier weaving machines</li>
+      <li>Built an electronic SMS control board</li>
+      <li>Built an oil-pump control board for weaving machines</li>
+      <li>Removed Sulzer trigger-plate sensors and replaced their function with an encoder</li>
+      <li>Replaced Sulzer takeoff gearbox with an AC motor controlled by an inverter</li>
+      <li>Removed packing/density gearbox on Sulzer machines and installed a servo motor instead</li>
+      <li>Built an IoT logger for weaving machines and a mobile app for monitoring and display</li>
+    </ul>
+
+    <h2>Other Projects</h2>
+    <div class="cols-2">
+      <ul>
+        <li>Online iron-furnace temperature monitoring — Yazd Alloy Steel Company</li>
+        <li>Vital-parameter and event monitoring device for Raja trains</li>
+        <li>Alarm-panel devices for national power substations</li>
+        <li>Tile resistance testing machine — Yazd tile factories</li>
+        <li>Desktop caliper device for tile factories</li>
+      </ul>
+      <ul>
+        <li>Smart-building motherboard — Yazd University</li>
+        <li>Smart irrigation across 50 hectares — Yazd Alloy Steel lands</li>
+        <li>Team member — natural stone sorting machine with AI</li>
+        <li>Manufacturing of wood, stone, and plasma CNC machines</li>
+      </ul>
+    </div>
+
+    <h2>Technical Skills</h2>
+    <dl class="skills-grid">
+      <dt>Automation</dt>
+      <dd>PLC (DELTA, Fatek), HMI, WinProLadder, Fvdesigner, communication protocols</dd>
+      <dt>Motion</dt>
+      <dd>Servo, Inverter, Step Motor, pneumatics</dd>
+      <dt>Electronics</dt>
+      <dd>PCB design, Altium</dd>
+      <dt>MCU</dt>
+      <dd>STM32, STM32CubeMX, CodeVisionAVR</dd>
+      <dt>Mechanical</dt>
+      <dd>SolidWorks, industrial machine design</dd>
+      <dt>Software</dt>
+      <dd>Microsoft Office, PowerMill2018</dd>
+    </dl>
+
+    <div class="two-col">
+      <div>
+        <h2>Education</h2>
+        <div class="edu-item">
+          <div><strong>M.Sc. Mechatronics Engineering</strong><br />Islamic Azad University, Qazvin</div>
+          <div class="job-dates">2010 – 2013</div>
+        </div>
+        <div class="edu-item">
+          <div><strong>B.Sc. Electronics Engineering</strong><br />Islamic Azad University, Yazd</div>
+          <div class="job-dates">2005 – 2009</div>
+        </div>
+        <h2>Languages</h2>
+        <div class="meta-row"><span class="meta-label">Persian</span><span>Native</span></div>
+        <div class="meta-row"><span class="meta-label">English</span><span>B1 / Advanced</span></div>
+      </div>
+      <div>
+        <h2>Personal</h2>
+        <div class="meta-row"><span class="meta-label">Date of birth</span><span>04 Aug 1987</span></div>
+        <div class="meta-row"><span class="meta-label">Nationality</span><span>Iranian</span></div>
+        <div class="meta-row"><span class="meta-label">Marital status</span><span>Married</span></div>
+        <div class="meta-row"><span class="meta-label">Military service</span><span>Completed</span></div>
+        <div class="meta-row"><span class="meta-label">Driving licence</span><span>B, C1</span></div>
+      </div>
+    </div>
+
+    <h2>Patents</h2>
+    <ul>
+      <li>Object localization using triangle similarity</li>
+      <li>Mine-detection robot with mapping capability</li>
+    </ul>
+
+    <h2>Awards (Robotics Competitions)</h2>
+    <div class="cols-2">
+      <ul>
+        <li>5th place — Singapore RoboCup — Rescue Robot — 2010</li>
+        <li>1st place — 3rd Kharazmi — Best Dynamics, Rescue Robot — 2010</li>
+        <li>2nd place — 3rd Kharazmi — Rescue Robot — 2010</li>
+        <li>1st place — IranOpen 2010 — Manual Mine-Detection Robot</li>
+        <li>Nominee — Outstanding Student, IAU Yazd — 2010</li>
+      </ul>
+      <ul>
+        <li>2nd place — 2nd Kharazmi — Manual Mine-Detection Robot — 2009</li>
+        <li>2nd place (provincial) — Line-Follower Robot — 2009</li>
+        <li>3rd place — IranOpen 2009 — Manual Mine-Detection Robot</li>
+        <li>2nd place — 2nd Amirkabir Robotics — Painter Robot — 2009</li>
+      </ul>
+    </div>
+
+    <footer>Curriculum Vitae prepared for collaboration inquiry with Picanol · Ehsan Ghasemi Firozabadi</footer>
+  </main>
+</body>
+</html>

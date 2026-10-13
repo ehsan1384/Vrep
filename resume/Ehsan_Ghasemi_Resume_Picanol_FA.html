@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>احسان قاسمی فیروزآبادی — رزومه (پیکانول)</title>
+  <style>
+    :root {
+      --ink: #1a2332;
+      --muted: #5a6577;
+      --line: #d5dbe3;
+      --accent: #0b4f6c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #e9edf2;
+      color: var(--ink);
+      font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+      font-size: 9.7pt;
+      line-height: 1.5;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 12px auto;
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 11mm 12mm 10mm;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 28mm 1fr;
+      gap: 6mm;
+      align-items: center;
+      border-bottom: 2.5px solid var(--accent);
+      padding-bottom: 4.5mm;
+      margin-bottom: 3.5mm;
+    }
+    .photo {
+      width: 28mm;
+      height: 34mm;
+      object-fit: cover;
+      object-position: center top;
+      border: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 1.5mm;
+      font-size: 16pt;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .headline {
+      margin: 0 0 2mm;
+      font-size: 10pt;
+      font-weight: 600;
+    }
+    .contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2mm 4mm;
+      color: var(--muted);
+      font-size: 8.8pt;
+    }
+    .contact span { direction: ltr; unicode-bidi: isolate; }
+    h2 {
+      margin: 3.8mm 0 1.8mm;
+      font-size: 10.5pt;
+      color: var(--accent);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 1mm;
+    }
+    .summary { margin: 0; text-align: justify; }
+    .job { margin-bottom: 2.5mm; }
+    .job-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 3mm;
+      align-items: baseline;
+    }
+    .job-title { font-weight: 700; }
+    .job-company { color: var(--muted); }
+    .job-dates {
+      color: var(--muted);
+      font-size: 8.8pt;
+      white-space: nowrap;
+      direction: ltr;
+    }
+    ul { margin: 1mm 0 0; padding-right: 4.2mm; padding-left: 0; }
+    li { margin-bottom: .7mm; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 0 7mm;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 26mm 1fr;
+      gap: 1mm 2.5mm;
+    }
+    .skills-grid dt { font-weight: 700; color: var(--accent); }
+    .skills-grid dd { margin: 0; }
+    .meta-row, .edu-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 3mm;
+      margin-bottom: 1mm;
+    }
+    .meta-label { font-weight: 600; }
+    .cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 5mm;
+    }
+    .note {
+      background: #fff8e8;
+      border: 1px dashed #c9a227;
+      padding: 2.5mm 3.5mm;
+      margin-bottom: 3.5mm;
+      font-size: 8.8pt;
+    }
+    footer {
+      margin-top: 3.5mm;
+      font-size: 8pt;
+      color: var(--muted);
+      text-align: center;
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; width: auto; min-height: auto; }
+      .note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="note">نسخه فارسی برای بررسی محتواست. نسخه رسمی ارسال به پیکانول، فایل انگلیسی است.</div>
+
+    <header>
+      <img class="photo" src="photo.jpg" alt="احسان قاسمی فیروزآبادی" />
+      <div>
+        <h1>احسان قاسمی فیروزآبادی</h1>
+        <p class="headline">مهندس مکاترونیک · اتوماسیون صنعتی · متخصص ماشین‌آلات نساجی</p>
+        <div class="contact">
+          <span>یزد، ایران</span>
+          <span>e.ghasemi.f@gmail.com</span>
+          <span>+98 913 356 5130</span>
+          <span>No.225, Park Elm, Motahari St, Yazd, 8917697998</span>
+        </div>
+      </div>
+    </header>
+
+    <h2>خلاصه حرفه‌ای</h2>
+    <p class="summary">
+      از ابتدای دوره کارشناسی وارد تیم رباتیک دانشگاه شدم و در طول تحصیل کارشناسی در مسابقات مختلف رباتیک به مقام‌های متعددی دست یافتم. پس از کارشناسی، به‌واسطه افتخارات کسب‌شده در رباتیک، بدون کنکور وارد مقطع کارشناسی ارشد شدم. پس از پایان تحصیلات وارد بازار کار شدم و چند سال در شرکت‌ها و صنایع مختلف فعالیت کردم تا شرکت خودم را تأسیس کردم و هم‌اکنون مدیرعامل آن هستم. در صنایع گوناگون دستگاه‌های متنوعی ساخته‌ام و ایده‌های متعددی برای بهبود عملکرد ارائه داده‌ام. مهندس مکاترونیک هستم؛ برنامه‌نویسی نرم‌افزار و سخت‌افزار، طراحی مکانیک و طراحی بردهای الکترونیکی را بلدم، اما علاقه‌ام بیشتر به ایده‌پردازی و ساخت دستگاه‌های جدید است.
+    </p>
+
+    <h2>سوابق کاری</h2>
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="job-title">مدیرعامل (CEO)</span>
+          <span class="job-company">— شرکت مادیار مکاترونیک، یزد</span>
+        </div>
+        <div class="job-dates">2016 – Present</div>
+      </div>
+      <ul>
+        <li>هدایت پروژه‌های مکاترونیک در طراحی الکترونیک، برنامه‌نویسی سخت‌افزار/نرم‌افزار و یکپارچه‌سازی ماشین.</li>
+        <li>ارائه ارتقای ماشین‌آلات نساجی و سامانه‌های اتوماسیون صنعتی برای مشتریان تولیدی.</li>
+      </ul>
+    </div>
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="job-title">طراح الکترونیک، برنامه‌نویس سخت‌افزار و مکانیک</span>
+          <span class="job-company">— شرکت نوین‌آرا پردازش ایساتیس، یزد</span>
+        </div>
+        <div class="job-dates">mid 2013 – 2016</div>
+      </div>
+      <ul>
+        <li>طراحی بردهای الکترونیکی و برنامه‌نویسی کنترل‌کننده‌ها برای ماشین‌های صنعتی سفارشی.</li>
+        <li>پشتیبانی طراحی مکانیک (SolidWorks) و زیرسیستم‌های پنوماتیک تا مرحله راه‌اندازی.</li>
+      </ul>
+    </div>
+    <div class="job">
+      <div class="job-head">
+        <div>
+          <span class="job-title">طراح الکترونیک و برق</span>
+          <span class="job-company">— کارخانه قائمیه تفت، یزد</span>
+        </div>
+        <div class="job-dates">2012 – mid 2013</div>
+      </div>
+      <ul>
+        <li>طراحی راه‌حل‌های الکتریکی/الکترونیکی برای تجهیزات تولید کارخانه.</li>
+      </ul>
+    </div>
+
+    <h2>پروژه‌های نساجی / بافندگی</h2>
+    <ul>
+      <li>ساخت سلکتور پود دستگاه بافندگی ۴ رنگ با قابلیت برنامه‌پذیری از USB و قابل نصب روی کلیه ماشین‌آلات بافندگی</li>
+      <li>ساخت سلکتور پود دستگاه‌های بافندگی ژاکارد</li>
+      <li>ساخت قیچی ضایعات دستگاه‌های بافندگی</li>
+      <li>ساخت انکودر مخصوص ماشین‌آلات بافندگی شرکت Dornier</li>
+      <li>ساخت برد الکترونیکی SMS کنترل</li>
+      <li>ساخت برد کنترل پمپ روغن دستگاه بافندگی</li>
+      <li>حذف سنسورهای صفحه تریگر از دستگاه سولزر و جایگزین کردن عملکرد آن با انکودر</li>
+      <li>تعویض گیربکس takeoff با موتور AC و کنترل آن با اینورتر در ماشین‌آلات سولزر</li>
+      <li>حذف گیربکس تراکم در ماشین‌آلات سولزر و نصب سرووموتور به جای آن</li>
+      <li>ساخت لاگر برای ماشین‌آلات بافندگی به‌وسیله اینترنت اشیا و برنامه‌نویسی اپلیکیشن برای مانیتورینگ و نمایش روی گوشی موبایل</li>
+    </ul>
+
+    <h2>سایر پروژه‌ها</h2>
+    <div class="cols-2">
+      <ul>
+        <li>مانیتورینگ آنلاین دمای کوره آهن — فولاد آلیاژی یزد</li>
+        <li>ساخت دستگاه مانیتورینگ پارامترهای حیاتی و اتفاقات قطارهای شرکت رجا</li>
+        <li>ساخت دستگاه آلارم پنل برای پست‌های برق کشور</li>
+        <li>ساخت دستگاه تست مقاومت کاشی در کارخانجات کاشی یزد</li>
+        <li>ساخت دستگاه کولیس رومیزی برای کارخانجات کاشی</li>
+      </ul>
+      <ul>
+        <li>ساخت مادربرد ساختمان هوشمند در دانشگاه یزد</li>
+        <li>اجرای آبیاری هوشمند ۵۰ هکتار از زمین‌های فولاد آلیاژی یزد</li>
+        <li>عضویت در تیم ساخت دستگاه دسته‌بندی سنگ طبیعی با هوش مصنوعی</li>
+        <li>ساخت CNC چوب / سنگ / پلاسما</li>
+      </ul>
+    </div>
+
+    <h2>مهارت‌های فنی</h2>
+    <dl class="skills-grid">
+      <dt>اتوماسیون</dt>
+      <dd>PLC (DELTA، Fatek)، HMI، WinProLadder، Fvdesigner، پروتکل‌های ارتباطی</dd>
+      <dt>حرکت</dt>
+      <dd>Servo، Inverter، Step Motor، پنوماتیک</dd>
+      <dt>الکترونیک</dt>
+      <dd>طراحی PCB، Altium</dd>
+      <dt>میکرو</dt>
+      <dd>STM32، STM32CubeMX، CodeVisionAVR</dd>
+      <dt>مکانیک</dt>
+      <dd>SolidWorks، طراحی صنعتی ماشین</dd>
+      <dt>نرم‌افزار</dt>
+      <dd>Microsoft Office، PowerMill2018</dd>
+    </dl>
+
+    <div class="two-col">
+      <div>
+        <h2>تحصیلات</h2>
+        <div class="edu-item">
+          <div><strong>کارشناسی ارشد مهندسی مکاترونیک</strong><br />دانشگاه آزاد اسلامی قزوین</div>
+          <div class="job-dates">2010 – 2013</div>
+        </div>
+        <div class="edu-item">
+          <div><strong>کارشناسی مهندسی الکترونیک</strong><br />دانشگاه آزاد اسلامی یزد</div>
+          <div class="job-dates">2005 – 2009</div>
+        </div>
+        <h2>زبان</h2>
+        <div class="meta-row"><span class="meta-label">فارسی</span><span>مادری</span></div>
+        <div class="meta-row"><span class="meta-label">انگلیسی</span><span>B1 / پیشرفته</span></div>
+      </div>
+      <div>
+        <h2>اطلاعات شخصی</h2>
+        <div class="meta-row"><span class="meta-label">سال تولد</span><span>۱۳۶۶</span></div>
+        <div class="meta-row"><span class="meta-label">ملیت</span><span>ایرانی</span></div>
+        <div class="meta-row"><span class="meta-label">وضعیت تأهل</span><span>متأهل</span></div>
+        <div class="meta-row"><span class="meta-label">سربازی</span><span>پایان خدمت</span></div>
+        <div class="meta-row"><span class="meta-label">گواهینامه</span><span>B، C1</span></div>
+      </div>
+    </div>
+
+    <h2>ثبت اختراع</h2>
+    <ul>
+      <li>مکان‌یابی موقعیت اشیاء با استفاده از تشابه مثلثات</li>
+      <li>ربات مین‌یاب با قابلیت ارائه نقشه</li>
+    </ul>
+
+    <h2>افتخارات (مسابقات رباتیک)</h2>
+    <div class="cols-2">
+      <ul>
+        <li>مقام پنجم — روبوکاپ سنگاپور — ربات امدادگر — ۲۰۱۰</li>
+        <li>مقام اول — سومین خوارزمی — بهترین پویایی ربات امدادگر — ۲۰۱۰</li>
+        <li>مقام دوم — سومین خوارزمی — ربات امدادگر — ۲۰۱۰</li>
+        <li>مقام اول — IranOpen 2010 — ربات مین‌یاب دستی</li>
+        <li>کاندید دانشجوی نمونه — دانشگاه آزاد یزد — ۲۰۱۰</li>
+      </ul>
+      <ul>
+        <li>مقام دوم — دومین خوارزمی — ربات مین‌یاب دستی — ۲۰۰۹</li>
+        <li>مقام دوم استانی — ربات مسیر‌یاب — ۲۰۰۹</li>
+        <li>مقام سوم — IranOpen 2009 — ربات مین‌یاب دستی</li>
+        <li>مقام دوم — دومین امیرکبیر — ربات نقاش — ۲۰۰۹</li>
+      </ul>
+    </div>
+
+    <footer>نسخه فارسی برای بررسی · رزومه همکاری با پیکانول · احسان قاسمی فیروزآبادی</footer>
+  </main>
+</body>
+</html>
